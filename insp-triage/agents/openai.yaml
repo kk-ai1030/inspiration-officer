@@ -1,0 +1,4 @@
+interface:
+  display_name: "Inspiration Triage"
+  short_description: "灵感漏斗 L0+L1：用脚本做增量 diff、去重、硬门槛与粗打分，零 LLM 成本。"
+  default_prompt: "使用 $insp-triage 对 raw_items.json 运行增量筛选，输出 triage.json 和计数摘要。"

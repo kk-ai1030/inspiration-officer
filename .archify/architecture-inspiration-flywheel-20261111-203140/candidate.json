@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "灵感官系统架构 · 现状与知识飞轮优化方向",
+    "locale": "zh-CN",
+    "output": ".archify/architecture-inspiration-flywheel-20261111-203140/inspiration-architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "你 / 评价者", "sublabel": "网页触发 · 评价页", "pos": [40, 220], "size": [130, 64] },
+    { "id": "platform", "type": "cloud", "label": "SciencePal 平台", "sublabel": "Agent / Skills / Memory", "pos": [40, 50], "size": [130, 64] },
+    { "id": "prepare", "type": "backend", "label": "prepare", "sublabel": "insp_run.py prepare", "pos": [250, 50], "size": [140, 64] },
+    { "id": "triage", "type": "backend", "label": "triage", "sublabel": "triage.py · 去重打分", "pos": [470, 50], "size": [140, 64] },
+    { "id": "cards", "type": "backend", "label": "insp-card", "sublabel": "写卡 · 契约校验", "pos": [690, 50], "size": [140, 64] },
+    { "id": "finalize", "type": "backend", "label": "finalize", "sublabel": "配额裁剪 · 结果块", "pos": [910, 50], "size": [140, 64] },
+    { "id": "receiver", "type": "backend", "label": "收货员", "sublabel": "receiver.py · 幂等", "pos": [910, 220], "size": [140, 64] },
+    { "id": "review", "type": "frontend", "label": "评价页", "sublabel": "review_server.py :8765", "pos": [690, 220], "size": [140, 64] },
+    { "id": "verdict", "type": "backend", "label": "评价写入", "sublabel": "record_verdict.py", "pos": [470, 220], "size": [140, 64] },
+    { "id": "weekly", "type": "backend", "label": "周报 / 学习", "sublabel": "weekly_review.py", "pos": [250, 220], "size": [140, 64] },
+    { "id": "state", "type": "database", "label": "本地状态", "sublabel": "state.json 等文件", "pos": [250, 370], "size": [140, 64] },
+    { "id": "observe", "type": "backend", "label": "本地观察", "sublabel": "observe.py + observers", "pos": [470, 370], "size": [140, 64] },
+    { "id": "publish", "type": "backend", "label": "状态发布", "sublabel": "publish_state.py", "pos": [690, 370], "size": [140, 64] },
+    { "id": "action", "type": "backend", "label": "动手 / 追问", "sublabel": "run_action / ask_detail", "pos": [910, 370], "size": [140, 64] },
+    { "id": "posttrain", "type": "cloud", "label": "后训练", "sublabel": "偏好数据与对齐", "tag": "方向", "pos": [250, 540], "size": [160, 68] },
+    { "id": "engineering", "type": "cloud", "label": "工程化", "sublabel": "契约与回归门禁", "tag": "方向", "pos": [470, 540], "size": [160, 68] },
+    { "id": "evaluation", "type": "cloud", "label": "评测系统", "sublabel": "指标与评测基线", "tag": "方向", "pos": [690, 540], "size": [160, 68] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "云端沙箱 · SciencePal Skills", "wraps": ["prepare", "triage", "cards", "finalize"] },
+    { "kind": "region", "label": "本机平台（Windows）", "wraps": ["receiver", "review", "verdict", "weekly", "state", "observe", "publish", "action"] },
+    { "kind": "region", "label": "优化方向 · 规划分组（非运行时边界）", "wraps": ["posttrain", "engineering", "evaluation"] }
+  ],
+  "connections": [
+    { "id": "c_user_platform", "from": "user", "to": "platform", "label": "对话触发", "variant": "emphasis" },
+    { "id": "c_platform_prepare", "from": "platform", "to": "prepare", "label": "触发" },
+    { "id": "c_prepare_triage", "from": "prepare", "to": "triage", "label": "候选" },
+    { "id": "c_triage_cards", "from": "triage", "to": "cards", "label": "入围" },
+    { "id": "c_cards_finalize", "from": "cards", "to": "finalize", "label": "校验" },
+    { "id": "c_finalize_receiver", "from": "finalize", "to": "receiver", "label": "结果块", "variant": "emphasis" },
+    { "id": "c_receiver_review", "from": "receiver", "to": "review", "label": "入库" },
+    { "id": "c_review_verdict", "from": "review", "to": "verdict", "label": "评价" },
+    { "id": "c_verdict_weekly", "from": "verdict", "to": "weekly", "label": "评价流" },
+    { "id": "c_weekly_state", "from": "weekly", "to": "state", "label": "提议" },
+    { "id": "c_verdict_state", "from": "verdict", "to": "state", "label": "追加" },
+    { "id": "c_observe_state", "from": "observe", "to": "state", "label": "发现" },
+    { "id": "c_observe_publish", "from": "observe", "to": "publish", "label": "快照" },
+    { "id": "c_receiver_action", "from": "receiver", "to": "action", "label": "动手单" },
+    { "id": "c_state_prepare", "from": "state", "to": "prepare", "label": "状态快照", "variant": "dashed", "fromSide": "left", "toSide": "left", "via": [[190, 402], [190, 82]] },
+    { "id": "c_state_posttrain", "from": "state", "to": "posttrain", "label": "偏好数据", "variant": "dashed" },
+    { "id": "c_state_engineering", "from": "state", "to": "engineering", "label": "契约基线", "variant": "dashed" },
+    { "id": "c_state_evaluation", "from": "state", "to": "evaluation", "label": "评测样本", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "现状主链路（实线）",
+      "items": [
+        "SciencePal 触发 prepare → triage → insp-card → finalize",
+        "收货员按结果块入库 → 评价页 → record_verdict() → 周报",
+        "状态快照经 publish_state 回灌沙箱，形成当前闭环"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "隐式数据层",
+      "items": [
+        "无数据库：state.json / verdicts.jsonl / negative.jsonl / cards.json",
+        "评价只经 record() 追加；state.json 却有多处写入者",
+        "runs.jsonl / audit.jsonl / actions.jsonl 承担审计与观测"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "三条优化方向（虚线，非既有实现）",
+      "items": [
+        "后训练：verdicts / implicit / 画像 / 负面清单 → 偏好数据与版本回滚",
+        "工程化：契约测试、单一规则源、状态所有权、回归门禁",
+        "评测系统：离线集、在线指标、人工抽检、回归基线"
+      ]
+    }
+  ]
+}

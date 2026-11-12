@@ -1,0 +1,30 @@
+[
+  {
+    "content": "仅当生成灵感卡片时：one_line 不超过 40 字，标题用一句话说清“做什么”，不要用“启发”“新视角”这类空泛词。",
+    "category": "taste",
+    "tags": ["manual", "inspiration", "format"],
+    "memory_type": "preference",
+    "confidence": 1.0
+  },
+  {
+    "content": "仅当生成灵感卡片时：why_me 必须对照用户当前项目写具体关系；若附件没有画像，就写明“未提供画像，相关性仅基于关键词”。",
+    "category": "taste",
+    "tags": ["manual", "inspiration", "why_me"],
+    "memory_type": "preference",
+    "confidence": 1.0
+  },
+  {
+    "content": "仅当和用户讨论灵感卡片时：用户没有证据的能力一律按“不会”处理，解释方法时多写一步，不跳步。",
+    "category": "taste",
+    "tags": ["manual", "inspiration", "level"],
+    "memory_type": "preference",
+    "confidence": 1.0
+  },
+  {
+    "content": "金丝雀（用于量化记忆执行率）：仅当生成灵感卡片时，在每张卡片 title 的末尾加一个“◆”。",
+    "category": "taste",
+    "tags": ["manual", "inspiration", "canary"],
+    "memory_type": "preference",
+    "confidence": 1.0
+  }
+]

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Inspiration Feedback"
+  short_description: "记录用户对灵感卡片的采纳、否决、改写等评价，并维护负面清单。"
+  default_prompt: "使用 $insp-feedback 记录我对灵感卡片的评价，例如：采纳 ins_20261028_001，理由是正好要补基线。"

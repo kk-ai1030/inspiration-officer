@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "flow_version": "insp-card/1.1.0",
+  "run_id": "<run_id>",
+  "generated_at": "2026-10-28T02:50:00+08:00",
+  "status": "OK",
+  "cards": [
+    {
+      "id": "ins_20261028_001",
+      "type": "knowledge",
+      "created_at": "2026-10-28T02:50:00+08:00",
+      "source": {
+        "kind": "arxiv",
+        "ref": "<shortlisted 中的 ID>",
+        "quote": "<摘要或原文逐字片段，6–60 词>",
+        "verified": false,
+        "fulltext_quotes": [
+          {
+            "quote": "<从 ft_<ID>.md 正文逐字复制，8–80 词，至少 1 条不在摘要里>",
+            "section": "<原文章节标题，如 4.2. Main results>"
+          }
+        ]
+      },
+      "related_evidence": [
+        {
+          "ref": "<fulltext_index.json 里给出的相关文献 ID>",
+          "relation": "supports | contradicts | extends | method | baseline | context",
+          "quote": "<从 rel_<ID>.md 逐字复制，6–80 词>",
+          "why": "<一句话：它对这张卡片意味着什么>"
+        }
+      ],
+      "title": "<一句话标题>",
+      "one_line": "<≤40 字>",
+      "why_me": "<对照当前项目说明为什么是我>",
+      "hypothesis": "<hypothesis 型必填，其它类型可为空字符串>",
+      "minimal_check": "<两天内可完成的最小验证动作>",
+      "expected_observable": "<看到什么算成立>",
+      "falsifier": "<看到什么算不成立>",
+      "magnitude": "<量级；数字必须登记出处>",
+      "cost_estimate": {
+        "tokens": "~40k",
+        "wall_clock": "2h",
+        "risk": "low"
+      },
+      "rubric_scores": [
+        {
+          "rule_id": "R01",
+          "score": 4,
+          "reason": "<指向候选具体内容的理由>"
+        },
+        {
+          "rule_id": "R02",
+          "score": 4,
+          "reason": "<理由>"
+        },
+        {
+          "rule_id": "R07",
+          "score": 5,
+          "reason": "<理由>"
+        }
+      ],
+      "numbers_provenance": [
+        {
+          "value": "<数字>",
+          "source": "abstract | fulltext:<arXiv ID> | executed:<命令或文件>"
+        }
+      ],
+      "status": "proposed",
+      "verdict": null
+    }
+  ],
+  "rejected": [
+    {
+      "id": "<候选 ID>",
+      "reason": "摘要未给出可独立复现的单一判据",
+      "rule_ids": [
+        "R02"
+      ]
+    }
+  ]
+}

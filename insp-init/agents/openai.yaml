@@ -1,0 +1,4 @@
+interface:
+  display_name: "Inspiration Init"
+  short_description: "建立、检查或回读灵感机制的长期状态目录，确认下一次运行能否安全开始。"
+  default_prompt: "使用 $insp-init 检查我的 inspiration/ 状态目录是否完整，并告诉我上次运行的进度。"

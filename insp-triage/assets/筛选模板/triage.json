@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-10-28T02:40:00+08:00",
+  "status": "OK",
+  "counts": {
+    "raw": 40,
+    "seen": 32,
+    "new": 8,
+    "negative_filtered": 0,
+    "gate_failed": 0,
+    "similar_filtered": 0,
+    "below_threshold": 6,
+    "shortlisted": 2
+  },
+  "new_ids": [
+    "<示例：8 个新增 ID>"
+  ],
+  "revival_state": {
+    "every": 20,
+    "counter": 0
+  },
+  "revived_ids": [],
+  "shortlisted": [
+    {
+      "id": "<arXiv ID，去掉版本号>",
+      "raw_id": "<原始 ID>",
+      "title": "<标题>",
+      "abstract": "<摘要原文>",
+      "url": "https://arxiv.org/abs/<ID>",
+      "published": "2026-10-25",
+      "source": "arxiv",
+      "scores": {
+        "relevance": 4,
+        "actionability": 3,
+        "cost": 3,
+        "total": 3.5,
+        "matched_keywords": [
+          "agent memory"
+        ]
+      },
+      "revival": false
+    }
+  ],
+  "dropped": [
+    {
+      "id": "<ID>",
+      "reason": "below_threshold:relevance=1"
+    }
+  ]
+}

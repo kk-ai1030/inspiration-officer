@@ -1,0 +1,4 @@
+interface:
+  display_name: "Inspiration Card"
+  short_description: "灵感漏斗 L2：把预筛候选写成可审计的四类灵感卡片，逐条打分并遵守配额。"
+  default_prompt: "使用 $insp-card 把 triage.json 中的候选整理成灵感卡片，逐字引用摘要并输出结果块。"

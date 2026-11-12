@@ -1,0 +1,16 @@
+{
+  "ref": "9999.30001",
+  "status": "ok",
+  "method": "html",
+  "url": "https://arxiv.org/html/9999.30001",
+  "title": "Graph Memory for Long-Horizon Agents",
+  "chars": 4540,
+  "body_chars": 4540,
+  "sections": [
+    "Graph Memory for Long-Horizon Agents",
+    "Abstract",
+    "3 Method",
+    "References"
+  ],
+  "sha256": "3f47e158fd872319286acae41fe6bb344268aea4575771d256b607d7070edf76"
+}

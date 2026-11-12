@@ -1,0 +1,4 @@
+interface:
+  display_name: "Inspiration Profile"
+  short_description: "网页访谈建立或更新用户画像：7 问、预览、确认后输出 INSP_PROFILE_JSON，由本地收货员落盘并同步记忆。"
+  default_prompt: "使用 $insp-profile 访谈我，建立我的用户画像；确认前先给我看预览。"

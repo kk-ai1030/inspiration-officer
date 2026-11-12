@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "diagram_type": "tree",
+  "meta": {
+    "title": "知识飞轮功能地图 · 现状能力与三条优化方向",
+    "locale": "zh-CN",
+    "output": ".archify/tree-knowledge-flywheel-20261111-203140/knowledge-flywheel-functions.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "direction": "down"
+  },
+  "nodes": [
+    { "id": "flywheel", "label": "知识飞轮", "sublabel": "评价数据驱动下一轮更准的候选" },
+    { "id": "existing", "label": "现状能力基座", "parent": "flywheel", "sublabel": "仓库已有实现" },
+    { "id": "posttrain", "label": "后训练", "parent": "flywheel", "sublabel": "方向 · 偏好对齐" },
+    { "id": "engineering", "label": "工程化", "parent": "flywheel", "sublabel": "方向 · 可回归变更" },
+    { "id": "evaluation", "label": "评测系统", "parent": "flywheel", "sublabel": "方向 · 指标闭环" },
+    { "id": "e_observe", "label": "本地观察", "parent": "existing", "sublabel": "observe.py + observers" },
+    { "id": "e_candidate", "label": "候选筛选", "parent": "existing", "sublabel": "triage.py 去重打分" },
+    { "id": "e_cards", "label": "卡片生成与校验", "parent": "existing", "sublabel": "insp-card / validate_cards" },
+    { "id": "e_ingest", "label": "收货入库", "parent": "existing", "sublabel": "receiver.py 幂等" },
+    { "id": "e_feedback", "label": "评价与学习", "parent": "existing", "sublabel": "record_verdict / weekly_review" },
+    { "id": "e_action", "label": "动手与追问", "parent": "existing", "sublabel": "run_action / ask_detail" },
+    { "id": "p_data", "label": "偏好数据构造", "parent": "posttrain", "sublabel": "verdicts / implicit / edits" },
+    { "id": "p_label", "label": "口味标签对齐", "parent": "posttrain", "sublabel": "rubric / weights / negative" },
+    { "id": "p_train", "label": "模型偏好优化", "parent": "posttrain", "sublabel": "SFT / DPO（方向）" },
+    { "id": "p_version", "label": "版本灰度与回滚", "parent": "posttrain", "sublabel": "确认制 + history" },
+    { "id": "g_contract", "label": "契约特征测试", "parent": "engineering", "sublabel": "CLI / 结果块 / 退出码" },
+    { "id": "g_rules", "label": "单一规则源", "parent": "engineering", "sublabel": "norm_id / 权重 / 配额" },
+    { "id": "g_state", "label": "状态所有权", "parent": "engineering", "sublabel": "state.json 多处写入" },
+    { "id": "g_trace", "label": "可观测与追踪", "parent": "engineering", "sublabel": "runs / audit / actions.jsonl" },
+    { "id": "g_gate", "label": "回归门禁", "parent": "engineering", "sublabel": "selfcheck g1 / g4 / g5" },
+    { "id": "v_offline", "label": "离线评测集", "parent": "evaluation", "sublabel": "fixtures + 脱敏样本" },
+    { "id": "v_online", "label": "在线指标", "parent": "evaluation", "sublabel": "采纳率 / 去重 / 成本" },
+    { "id": "v_quality", "label": "卡片质量评测", "parent": "evaluation", "sublabel": "来源 / 引文 / 推翻条件" },
+    { "id": "v_human", "label": "人工抽检标注", "parent": "evaluation", "sublabel": "G3 抽查表 → 标注" },
+    { "id": "v_baseline", "label": "回归基线与门槛", "parent": "evaluation", "sublabel": "weak-beta G1–G6" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "闭环怎么转",
+      "items": [
+        "观测/检索 → 去重打分 → 卡片 → 评价 → 权重/画像/负面清单",
+        "评测 → 后训练 → 候选生成，构成知识飞轮",
+        "当前评测与后训练两环缺失，靠周报与人工门槛替代"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "现状 vs 方向",
+      "items": [
+        "现状能力基座对应仓库现有模块与状态文件",
+        "后训练 / 工程化 / 评测系统是优化方向，非既有实现",
+        "三者共用 verdicts.jsonl、implicit.jsonl、runs.jsonl、cards.json"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "依赖关系",
+      "items": [
+        "评测系统产出指标与样本",
+        "后训练产出偏好模型与规则版本",
+        "工程化保证每次变更可回归、可回滚"
+      ]
+    }
+  ]
+}

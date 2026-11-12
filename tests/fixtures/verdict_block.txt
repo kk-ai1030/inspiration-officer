@@ -1,0 +1,4 @@
+好的，已记录。
+<<<INSP_VERDICTS_JSONL
+{"card_id": "ins_20261028_002", "action": "reject", "reason": "现在没空做 A/B", "block_topic": null}
+INSP_VERDICTS_JSONL>>>

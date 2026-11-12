@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "bootstrap": true,
+  "last_run_at": null,
+  "last_run_id": null,
+  "sources": [
+    {
+      "kind": "arxiv",
+      "query": "cat:cs.CL AND abs:\"agent memory\"",
+      "max_results": 60
+    }
+  ],
+  "keywords": [
+    "agent memory",
+    "retrieval",
+    "RAG",
+    "experience reuse"
+  ],
+  "seen_ids": [],
+  "pushed": [],
+  "quota": {
+    "daily_total_max": 999,
+    "optimization": {
+      "per_day": 999,
+      "_说明": "v1.5.1：A 类不设硬上限（只按质量门槛），也不计入 daily_total_max"
+    },
+    "knowledge": {
+      "per_week": 999,
+      "per_run": 5,
+      "_说明": "v1.5.3：B 类每次运行最多 5 张（per_run）；周配额仍不限"
+    },
+    "hypothesis": {
+      "per_week": 1
+    },
+    "process": {
+      "per_14_days": 2
+    },
+    "_说明": "knowledge 与 daily_total_max 为 999=实际不限（v1.4：抽卡改为手动触发，由你决定什么时候跑）；hypothesis/process 仍保留低频配额。想恢复克制就把这两个数改小。"
+  },
+  "quota_used": {},
+  "triage": {
+    "min_relevance": 3,
+    "max_shortlist": 8,
+    "title_similarity_threshold": 0.6
+  },
+  "revival": {
+    "every": 20,
+    "counter": 0
+  },
+  "observed": {
+    "_说明": "v1.5 本地观察通道（platform/observe.py 产出 observed.jsonl）。per_type=每类最多入围几条；max_total=每次最多几条；min_severity=严重度门槛（1–5）；max_age_days=多少天没再出现就不再推；a_floor=每轮至少保留 1 条 A 类候选（没有达标的就把严重度 ≥ a_floor_min_severity 的最强一条补位并标明）",
+    "enabled": true,
+    "per_type": {
+      "optimization": 3,
+      "knowledge": 2,
+      "hypothesis": 2,
+      "process": 2
+    },
+    "max_total": 6,
+    "min_severity": 2.0,
+    "max_age_days": 45,
+    "a_floor": true,
+    "a_floor_min_severity": 1.0
+  }
+}

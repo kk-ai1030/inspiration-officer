@@ -1,0 +1,4 @@
+interface:
+  display_name: "Inspiration Review"
+  short_description: "灵感机制周度复盘：采纳率、重复率、单维权重提议、记忆审计与三个月回访。"
+  default_prompt: "使用 $insp-review 生成本周灵感周报，列出权重调整提议和需要我确认的自动抽取记忆。"

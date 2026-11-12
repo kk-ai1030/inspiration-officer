@@ -1,0 +1,18 @@
+{
+  "ref": "9999.20002",
+  "status": "ok",
+  "method": "html",
+  "url": "https://arxiv.org/html/9999.20002",
+  "title": "Lifecycle Governance of Experience for Coding Agents",
+  "chars": 14350,
+  "body_chars": 14350,
+  "sections": [
+    "Lifecycle Governance of Experience for Coding Agents",
+    "Abstract",
+    "1 Introduction",
+    "3 Lifecycle governance",
+    "5 Experiments",
+    "References"
+  ],
+  "sha256": "a1d24618933944588cefaa2ec4ff049439388e783500b8793f8320bb25b4bd9e"
+}

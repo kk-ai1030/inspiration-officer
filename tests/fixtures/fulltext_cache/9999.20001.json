@@ -1,0 +1,19 @@
+{
+  "ref": "9999.20001",
+  "status": "ok",
+  "method": "html",
+  "url": "https://arxiv.org/html/9999.20001",
+  "title": "Naive RAG Is a Strong Baseline for Agent Memory",
+  "chars": 18453,
+  "body_chars": 18453,
+  "sections": [
+    "Naive RAG Is a Strong Baseline for Agent Memory",
+    "Abstract",
+    "1 Introduction",
+    "3 Method",
+    "4.2 Main results",
+    "6 Limitations",
+    "References"
+  ],
+  "sha256": "46cc641f1f2c96dde8e31e4a3f1673c081dbc21d43b80c7f170e735601496f5e"
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Inspiration Run"
+  short_description: "手动跑一次灵感：沙箱内自举抓取、预筛、抓原文，路由 insp-card 出卡，输出 INSP_BUNDLE_JSON 整包。"
+  default_prompt: "使用 $insp-nightly 主动探索灵感：运行 insp_run.py prepare，按 insp-card 写卡片，再运行 finalize，最后原样输出 INSP_BUNDLE_JSON 结果块。"

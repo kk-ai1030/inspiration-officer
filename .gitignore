@@ -1,0 +1,32 @@
+# 本地专用：不进 Git、不进发布包
+config.json
+config_exp.json
+platform_ids.json
+probe_report.json
+*.bak-*
+.env
+inspiration/
+inspiration_exp/
+runs/
+feedback/
+dist/
+release/
+release_evidence/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+
+# 本地资料库（你的代码 / 笔记 / 论文 / 数据 / 日志）
+library/
+.stale_backup/
+
+# 演示重置的备份
+demo_backups/
+
+# 令牌与凭据（任何位置）
+*.token
+*.secret
+**/run_token
+**/session_token
+**/.sciencepal/

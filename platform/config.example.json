@@ -1,0 +1,193 @@
+{
+  "base_url": "https://sciencepal.ai",
+  "token_env": "SCIENCEPAL_RUN_TOKEN",
+  "setup_token_env": "SCIENCEPAL_SETUP_TOKEN",
+  "auth_header": "Authorization",
+  "auth_scheme": "Bearer",
+  "state_dir": "./inspiration",
+  "work_dir": "./runs",
+  "platform_ids_file": "./platform_ids.json",
+  "agent_name": "灵感官",
+  "model_name": null,
+  "web_search_on": false,
+  "workspace_context": null,
+  "run_timeout_s": 1500,
+  "max_attempts": 2,
+  "require_skill_loaded": "auto",
+  "skill_to_check": "insp-card",
+  "expect_flow_version": "insp-card/1.1.0",
+  "verify_arxiv_online": true,
+  "arxiv_title_fuzzy": 0.9,
+  "arxiv_network_policy": "keep_unverified",
+  "heal_pushed_from_archive": true,
+  "arxiv_fetch_mode": "abstract",
+  "_arxiv_fetch_mode_说明": "论文读取模式（一个字段切换）：\"abstract\" = 默认，只读 arXiv 标题+摘要出卡，卡片附摘要页链接，快；\"fulltext\" = 出卡前通读候选论文全文 + 相关文献全文，卡片必须引用正文并附全文链接，约慢 4–5 倍。不写、写错都按 abstract。改完后评价页按钮立即生效；网页里直接 @灵感官 需同步记忆：python platform/receiver.py --config config.json --sync-settings",
+  "fulltext": {
+    "_说明": "仅在 arxiv_fetch_mode = \"fulltext\" 时使用的抓取参数（arXiv HTML 优先，PDF 兜底需 pip install pypdf）。旧版的 required 字段已废弃、不再生效。",
+    "cache_dir": "./inspiration/fulltext",
+    "max_candidates": 4,
+    "min_related": 1,
+    "related_cited": 1,
+    "related_search": 2,
+    "max_chars_main": 120000,
+    "max_chars_related": 60000,
+    "max_retries": 3,
+    "request_interval_s": 3,
+    "timeout_s": 40,
+    "min_body_chars": 3000
+  },
+  "observe": {
+    "_说明": "v1.5 本地观察（observed 通道）：扫描你的代码 / 笔记 / 论文 / 数据 / 日志，把发现写进 inspiration/observed.jsonl，触发运行时随状态上传，灵感官据此写 A 类优化卡等。有这一段就开启；删掉整段 = 关闭。手动：python platform/observe.py --config config.json scan / list",
+    "enabled": true,
+    "auto_scan_before_run": true,
+    "roots": [
+      {
+        "path": "./library/code",
+        "kind": "code"
+      },
+      {
+        "path": "./library/notes",
+        "kind": "notes"
+      },
+      {
+        "path": "./library/papers",
+        "kind": "papers"
+      },
+      {
+        "path": "./library/data",
+        "kind": "data"
+      },
+      {
+        "path": "./library/logs",
+        "kind": "logs"
+      }
+    ],
+    "_roots_说明": "kind 取 code / notes / papers / data / logs / mixed，只影响 .txt / .pdf 等歧义扩展名的归类。大仓库不用复制，直接写原路径，例如 {\"path\": \"D:/research/qmc\", \"kind\": \"code\", \"label\": \"qmc\"}（git 仓库会读 git log 算改动热点）。上传给平台的证据里只出现 library://<label>/<相对路径>，不出现你的绝对路径。",
+    "exclude_dirs": [],
+    "exclude_globs": [],
+    "max_files": 20000,
+    "_exclude_说明": "exclude_dirs = 额外跳过的目录名（.git、node_modules、__pycache__、venv 等已内置跳过）；exclude_globs = 按相对路径排除，如 \"docs/**\"、\"*.bak\"；max_files = 最多扫多少个文件",
+    "upload_code_snippets": true,
+    "_upload_code_snippets_说明": "true = 证据里带最多 snippet_lines 行代码原文（灵感官才能提具体改法）；false = 只上传指标（行数 / 复杂度 / 位置），不上传代码。密钥、令牌、邮箱、个人目录始终自动脱敏。",
+    "snippet_lines": 40,
+    "lookback_days": 30,
+    "max_items": 80,
+    "time_budget_s": 180,
+    "code": {
+      "long_function_lines": 80,
+      "complexity": 15,
+      "nesting": 5,
+      "dup_min_lines": 12,
+      "churn_days": 90,
+      "max_per_file": 3,
+      "max_args": 7,
+      "max_smell_files": 5
+    },
+    "usage": {
+      "days": 14,
+      "min_count": 3,
+      "conversations": true,
+      "shell_history": false,
+      "_说明": "conversations = 读平台会话标题（需要会话令牌，灵感系统自己的会话自动排除）；shell_history = 读 PowerShell / bash 历史里运行过哪些脚本（默认关，只记脚本名）"
+    }
+  },
+  "output_file_candidates": [
+    "/workspace/inspiration_out/cards.json",
+    "inspiration_out/cards.json"
+  ],
+  "notify": {
+    "feishu_webhook_env": "INSP_FEISHU_WEBHOOK"
+  },
+  "review": {
+    "enabled": true,
+    "port": 8765,
+    "windows_toast": true,
+    "fallback_open_browser": true
+  },
+  "weights": {
+    "_说明": "两层权重参数：events=单条反馈事件的权重（§10b）；learning=采纳率→权重调整的参数（§10c）。学到的权重值本身在 inspiration/taste/weights.json，不在这里。",
+    "events": {
+      "adopt": 1.0,
+      "start_now": 1.0,
+      "reject": -1.0,
+      "done": -1.0,
+      "not_important": -0.5,
+      "edited": 0.8,
+      "ask_detail": 0.5,
+      "read_no_action": -0.2,
+      "unread": -0.1
+    },
+    "learning": {
+      "profile": "prod",
+      "alpha": 2,
+      "beta": 2,
+      "lambda": 0.3,
+      "min_n": 5,
+      "min_delta": 0.01,
+      "floor": 0.1,
+      "dimensions": [
+        "type",
+        "subfield"
+      ],
+      "review_files": "weekly"
+    }
+  },
+  "actions": {
+    "_说明": "“立刻动手”分档执行与回执（platform/run_action.py）",
+    "enabled": true,
+    "start_now_mode": "form",
+    "_start_now_mode_说明": "评价页按 6“立刻动手”后——form（默认，旧值 auto / confirm 也按 form 处理）=先弹出预填好的动手单（场景 / 参数〔数值+单位+来源 library·observed·user〕/ 方法 / 产出 / 对照 / 判据 / 交付），你核对或修改后点“确认开跑”才建任务；direct=动手单完整就直接建任务、缺参数才弹窗；off=只记录评价",
+    "attach_local_files": true,
+    "max_local_file_mb": 2,
+    "_attach_local_files_说明": "观察型卡片（A 类等）把卡片证据所在的本地文件（脱敏后、≤ max_local_file_mb）附给任务；observe.upload_code_snippets=false 时不附",
+    "auto_tiers": [
+      "T0",
+      "T1"
+    ],
+    "allow_auto_risk": [
+      "low"
+    ],
+    "max_auto_tokens": 60000,
+    "max_auto_hours": 4,
+    "daily_auto_max": 3,
+    "run_timeout_s": 1800,
+    "plan_timeout_s": 600,
+    "max_download_mb": 20,
+    "plan_keywords": [
+      "部署",
+      "上线",
+      "发布",
+      "生产环境",
+      "正式数据",
+      "数据库",
+      "push",
+      "merge",
+      "删除",
+      "覆盖原文件",
+      "迁移",
+      "rm -rf",
+      "drop table"
+    ],
+    "manual_keywords": [
+      "仪器",
+      "设备",
+      "实验台",
+      "湿实验",
+      "样品",
+      "试剂",
+      "动物",
+      "患者",
+      "受试者",
+      "下单",
+      "购买",
+      "付款",
+      "发邮件",
+      "发送邮件",
+      "投稿",
+      "instrument",
+      "wet lab",
+      "purchase",
+      "send email"
+    ]
+  }
+}

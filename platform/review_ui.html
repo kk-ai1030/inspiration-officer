@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>灵感卡片 · 评价</title>
+<style>
+:root{--bg:#131313;--card:#1c1c1c;--line:#2b2b2b;--t:#ececec;--t2:#a8a8a8;--t3:#6b6b6b;--ac:#e8a33d;--ok:#5fb37a;--no:#d0605e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.6 Inter,"Segoe UI","Microsoft YaHei","Noto Sans CJK SC",sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:26px 16px 40px}
+.wrap{width:min(680px,100%)}
+.bar{display:flex;justify-content:space-between;align-items:center;color:var(--t3);font-size:13px;margin-bottom:10px}
+.bar a{color:var(--t2);cursor:pointer;text-decoration:none;margin-left:14px}.bar a:hover{color:var(--ac)}
+.prog{height:3px;background:#262626;margin-bottom:20px}.prog i{display:block;height:100%;width:0;background:var(--ac);transition:width .3s}
+.banner{display:none;border:1px solid #5a3b1c;color:#e8c08a;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 30px 22px;position:relative;transition:transform .22s,opacity .22s;cursor:pointer;min-height:300px}
+.card.out{transform:translateX(70px);opacity:0}.card.in{animation:in .22s ease}
+@keyframes in{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.tags{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--t2);letter-spacing:.04em}
+.tags b{color:var(--ac);font-weight:600}.tags .ed{color:var(--ok)}
+h2{font-size:22px;margin:12px 0 6px;line-height:1.35}
+.one{color:var(--t2);margin:0 0 16px}
+.meta{font-size:12px;color:var(--t3)}.meta .v{color:var(--ok)}.meta .x{color:var(--no)}
+.back{display:none;border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
+.flipped .back{display:block}.flipped .hint{display:none}
+.f{margin:0 0 10px;white-space:pre-wrap}.f>span{display:block;font-size:11px;color:var(--t3);letter-spacing:.06em}
+.q{border-left:2px solid var(--ac);padding-left:10px;color:var(--t2);font-style:italic;white-space:pre-wrap}
+.evref{display:block;font-style:normal;font-size:12px;color:var(--t3);margin-top:4px;word-break:break-all}
+.q a{color:var(--t3);font-style:normal;font-size:12px;margin-left:6px}
+.hint{position:absolute;right:18px;bottom:12px;font-size:12px;color:var(--t3)}
+textarea{width:100%;background:#151515;color:var(--t);border:1px solid #3a3a3a;border-radius:6px;padding:6px 8px;font:inherit;resize:vertical;min-height:38px}
+textarea:focus,input:focus{outline:none;border-color:var(--ac)}
+.editing{cursor:default;border-color:#4a3a1c}
+.edbar{display:none;gap:8px;margin-top:8px}.editing .edbar{display:flex}
+.btn{background:#242424;color:var(--t);border:1px solid #3a3a3a;border-radius:8px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
+.btn:hover{border-color:var(--ac)}.btn.pri{background:var(--ac);color:#111;border-color:var(--ac)}
+.acts{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:16px}
+.acts button{background:var(--card);color:var(--t);border:1px solid #333;border-radius:8px;padding:10px 4px;font:inherit;font-size:13px;cursor:pointer}
+.acts button:hover{border-color:var(--ac)}.acts kbd{display:block;font-size:11px;color:var(--t3);font-family:inherit}
+.acts .a{border-color:#2f5a3c}.acts .r{border-color:#5a2f2f}
+.inputs{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:10px}
+input{background:#181818;border:1px solid var(--line);border-radius:8px;color:var(--t);padding:9px 12px;font:inherit;font-size:14px;width:100%}
+.keys{margin-top:14px;font-size:12px;color:var(--t3);text-align:center}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#262626;border:1px solid #3a3a3a;border-radius:8px;padding:8px 16px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.toast.click{pointer-events:auto;cursor:pointer;text-decoration:underline dotted}
+.job.hl{outline:2px solid var(--acc,#e8b04a);outline-offset:4px;border-radius:6px;animation:hlp 1.2s ease 2}
+@keyframes hlp{50%{outline-color:transparent}}
+.done{text-align:center;cursor:default}
+.list{margin-top:8px;text-align:left;font-size:13px}
+.list div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:7px 0}
+.list span:first-child{color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list b{color:var(--ac);font-weight:500;white-space:nowrap}
+.rcv{font-size:12px;color:var(--t3);margin:-12px 0 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rcv .err{color:var(--no)}.rcv a{color:var(--t2)}
+.newb{display:none;border:1px solid #2f5a3c;color:#9fd8b0;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:13px;cursor:pointer}
+.newb:hover{border-color:var(--ok)}
+.bar a.run{color:var(--ac)}.bar a.off{opacity:.45;pointer-events:none}
+/* v1.5.1 本地观察标签 · 历史详情 · 动手单 · 回执 */
+.tags .obs{color:#8fc3e8}.tags .bf{color:var(--t3);border:1px dashed #444;border-radius:4px;padding:0 5px}.tags .ab{color:var(--t3)}
+.list div.row{cursor:pointer}.list div.row:hover span:first-child{color:var(--t)}
+.list .lt{color:var(--t3);font-size:11px;margin-right:6px}
+.hverd{font-size:13px;color:var(--t2);margin:14px 2px 0}.hverd b{color:var(--ac);font-weight:600}
+.hnav{display:flex;gap:8px;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
+#rcb{display:inline-block;min-width:16px;margin-left:4px;padding:0 5px;border-radius:8px;background:var(--ac);color:#111;font-size:11px;text-align:center}#rcb:empty{display:none}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;overflow:auto;padding:30px 12px}.modal.on{display:block}
+.mbox{width:min(720px,100%);margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px}
+.mbox h3{margin:10px 0 4px;font-size:18px}.mbox label{display:block;font-size:11px;color:var(--t3);letter-spacing:.06em;margin:12px 0 4px}
+.mbox textarea{min-height:44px}.merr{color:#e8c08a;font-size:13px;margin:8px 0 0;white-space:pre-wrap}
+.prow{display:grid;grid-template-columns:2fr 1.2fr .9fr 1.4fr 26px;gap:6px;margin-bottom:6px}
+.prow input,.prow select{width:100%;background:#151515;color:var(--t);border:1px solid #3a3a3a;border-radius:6px;padding:5px 7px;font:inherit;font-size:13px}
+.prow.need input[data-f=value]{border-color:var(--ac)}.prow .x{cursor:pointer;color:var(--t3);text-align:center;line-height:30px}
+.job{border-top:1px solid var(--line);padding:12px 0;text-align:left;font-size:13px}
+.job .jt{display:flex;justify-content:space-between;gap:10px}.job .jt span:first-child{color:var(--t);font-size:14px}
+.job .st{color:var(--t2);white-space:nowrap}.job .st.w{color:var(--ac)}.job .st.ok{color:var(--ok)}.job .st.bad{color:var(--no)}
+.job .jm{color:var(--t3);font-size:12px;margin-top:2px}.job .jm a{color:var(--t2)}
+.job .jr{margin-top:6px;color:var(--t2);white-space:pre-wrap}.job .chk{font-size:12px;color:var(--t3);margin-top:4px}.job .chk .no{color:var(--no)}
+.job details{margin-top:6px;color:var(--t2)}.job summary{cursor:pointer;color:var(--t3);font-size:12px}
+.job .jb{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.job .jb .btn{padding:4px 10px;font-size:12px}
+.bl{margin:4px 0 0;padding-left:16px}.bl li{margin:2px 0}
+</style></head>
+<body><div class="wrap">
+<div class="bar"><span id="pos">加载中…</span><span><span id="cnt"></span><a id="runbtn" class="run" title="让灵感官现在跑一次（约 5–15 分钟）">主动探索灵感</a><a id="chk" title="立刻检查最近会话里有没有新结果">检查新结果</a><a id="rcpt" title="立刻动手的任务、动手单与回执">回执<span id="rcb"></span></a><a id="hist">历史</a><a id="help">快捷键</a></span></div>
+<div class="prog"><i id="pg"></i></div>
+<div class="rcv" id="rcv"></div>
+<div class="newb" id="newb"></div>
+<div class="banner" id="banner"></div>
+<div id="stage"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"></div>
+<script>
+function askSeen(id){try{return (JSON.parse(localStorage.getItem("insp_ask_seen")||"[]")).includes(id)}catch(e){return false}}
+function markAskSeen(id){try{const s=JSON.parse(localStorage.getItem("insp_ask_seen")||"[]");if(!s.includes(id)){s.push(id);localStorage.setItem("insp_ask_seen",JSON.stringify(s.slice(-300)))}}catch(e){}}
+
+const TOKEN="__TOKEN__";
+const SESSION=Math.random().toString(36).slice(2,10);
+const LABEL={knowledge:"知识",hypothesis:"假说",process:"流程",optimization:"优化"};
+const FIELDS=[["why_me","为什么和你有关"],["hypothesis","假说"],["minimal_check","最小验证"],["expected_observable","预期判据"],["falsifier","推翻条件"],["magnitude","量级"]];
+const CLS={adopt:"a",start_now:"a",reject:"r"};
+let HIDDEN=[],ASKS={seen:null,shown:{}};   // v1.5.3: 页面上隐藏的按钮（接口照常接受）；追问细节的状态
+let ACTS=[],EDITABLE=[],queue=[],k=0,flipped=false,editing=false,t0=Date.now(),history=[],offline=[],total=0;
+let mode="queue",hist={list:[],i:0},BRIEF=null,JOBS={seen:null,awaiting:0};   // v1.5.1: queue | histlist | hist | rcpt
+const DET={"code.long_function":"长函数","code.duplicate":"重复代码","code.dup":"重复代码","code.hotspot":"改动热点","code.perf_loop":"性能嫌疑","code.smell":"代码小问题"};
+const DETP={code:"代码扫描",logs:"日志",log:"日志",data:"数据",anomaly:"数据反常",notes:"笔记",papers:"论文库",usage:"使用统计"};
+const KIND={workspace:"工作区",log:"日志",anomaly:"数据反常"};
+const cur=()=>mode==="hist"?hist.list[hist.i]:queue[k];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(m,ms,onClick){const t=$("#toast");t.textContent=m;t.classList.add("on");t.classList.toggle("click",!!onClick);
+  t.onclick=onClick?()=>{t.classList.remove("on","click");onClick()}:null;
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on","click"),ms||Math.max(1800,Math.min(6000,String(m).length*90)))}
+async function api(path,body){
+  const r=await fetch(path,{method:body?"POST":"GET",headers:{"X-Token":TOKEN,"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({error:"HTTP "+r.status}));
+  if(!r.ok)throw Object.assign(new Error(j.error||j.message||("HTTP "+r.status)),{status:r.status,body:j});
+  return j;
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function view(c){return Object.assign({},c,c._edited||{})}
+async function load(){
+  try{const d=await api("/api/cards");ACTS=d.actions;HIDDEN=d.hidden||[];EDITABLE=d.editable;total=d.total;queue=shuffle(d.cards);k=0;render()}
+  catch(e){$("#stage").innerHTML=`<div class="card done"><h2>评价服务未连接</h2><p class="one">${esc(e.message)}</p><p class="meta">在包目录运行：python platform/review_server.py --config config_exp.json --open</p></div>`;$("#pos").textContent=""}
+}
+function implicit(){return{flipped,dwell_ms:Date.now()-t0,position:k,queue_size:queue.length,session:SESSION}}
+function obsTag(s){
+  const observed=s.read_mode==="observed"||["workspace","log","anomaly"].includes(s.kind);if(!observed)return"";
+  const d=s.detector||"",name=DET[d]||DETP[d.split(".")[0]]||d||KIND[s.kind]||s.kind||"";
+  return `<span class="obs" title="${esc(d||s.kind||"")}">本地观察 · ${esc(name)}</span>`+(s.backfill?'<span class="bf" title="本轮没有达到门槛的 A 类候选，按“每轮至少 1 张 A 类”补位">补位</span>':"");
+}
+function cardHTML(raw){
+  const c=view(raw),s=c.source||{},ce=c.cost_estimate||{};
+  const ref=String(s.ref||""),isArxiv=s.kind==="arxiv"&&/^\d{4}\.\d{4,5}/.test(ref);
+  return `
+  <div class="card in" id="cd">
+    <div class="tags"><b>${esc(LABEL[c.type]||c.type)}</b>${obsTag(s)}<span>${esc(c.subfield||"—")}</span><span>${esc(c.date)}</span>${raw._edited?'<span class="ed">已改写</span>':""}${raw.asked?'<span>已追问</span>':""}${c.action_brief?'<span class="ab" title="灵感官写好了动手单">有动手单</span>':""}</div>
+    <h2 data-k="title">${esc(c.title)}</h2>
+    <p class="one" data-k="one_line">${esc(c.one_line)}</p>
+    <div class="meta">${esc([ce.tokens,ce.wall_clock,ce.risk].filter(Boolean).join(" · "))} · ${s.verified?'<span class="v">来源已核验</span>':'<span class="x">来源未核验</span>'} · ${esc(ref)}${(s.read_mode==="fulltext"||(!s.read_mode&&(s.fulltext_quotes||[]).length))?" · 通读全文":s.read_mode==="abstract"?" · 只读摘要":s.read_mode==="observed"?" · 本地观察（"+esc(s.kind||"")+"）":""}</div>
+    <div class="back">
+      ${FIELDS.map(([f,l])=>`<p class="f"><span>${l}</span><span data-k="${f}">${esc(c[f]||"—")}</span></p>`).join("")}
+      <p class="f q">${esc(s.quote)}${isArxiv?`<a href="${esc(/^https:\/\/arxiv\.org\//.test(s.url||"")?s.url:"https://arxiv.org/abs/"+ref.replace(/v\d+$/,""))}" target="_blank" rel="noopener">摘要页 ↗</a>`:""}${/^https:\/\/arxiv\.org\//.test(s.fulltext_url||"")?` <a href="${esc(s.fulltext_url)}" target="_blank" rel="noopener">全文 ↗</a>`:""}${s.evidence_ref?` <span class="evref">本地证据：${esc(s.evidence_ref)}</span>`:""}</p>
+      <div class="edbar"><button class="btn pri" id="sv">保存改写 Ctrl+Enter</button><button class="btn" id="cx">取消 Esc</button></div>
+    </div>
+    <div class="hint">空格 翻面 · E 改写</div>
+  </div>`;
+}
+function bindCard(){
+  $("#cd").onclick=e=>{if(!editing&&!e.target.closest("a"))flip()};
+  $("#sv").onclick=e=>{e.stopPropagation();saveEdit()};$("#cx").onclick=e=>{e.stopPropagation();cancelEdit()};
+}
+function render(){
+  mode="queue";editing=false;flipped=false;t0=Date.now();
+  $("#pg").style.width=(queue.length?k/queue.length*100:100)+"%";
+  $("#cnt").textContent=`本次 ${history.length} 张`;
+  if(k>=queue.length)return finish();
+  $("#pos").textContent=`${k+1} / ${queue.length}`;
+  $("#stage").innerHTML=cardHTML(queue[k])+`
+  <div class="acts">${ACTS.map((a,i)=>HIDDEN.includes(a.key)?"":`<button class="${CLS[a.key]||""}" data-i="${i}">${esc(a.label)}<kbd>${i+1}</kbd></button>`).join("")}</div>
+  <div class="inputs"><input id="rs" placeholder="理由（可选）"><input id="bt" placeholder="屏蔽主题（可选）"></div>
+  <div class="keys">空格 翻面 · ${keyHint()} · E 改写 · Z 撤销上一张 · → 跳过</div>`;
+  bindCard();
+  document.querySelectorAll(".acts button").forEach(b=>b.onclick=()=>act(+b.dataset.i));
+}
+function keyHint(){return ACTS.map((a,i)=>HIDDEN.includes(a.key)?"":`${i+1} ${a.label}`).filter(Boolean).join(" · ")}
+function shown(i){return !!ACTS[i]&&!HIDDEN.includes(ACTS[i].key)}
+function flip(){flipped=!flipped;$("#cd").classList.toggle("flipped",flipped)}
+function startEdit(){
+  if(editing||!cur()||!$("#cd"))return;editing=true;flipped=true;
+  const cd=$("#cd");cd.classList.add("flipped","editing");const c=view(cur());
+  cd.querySelectorAll("[data-k]").forEach(el=>{const f=el.dataset.k;if(!EDITABLE.includes(f))return;
+    const ta=document.createElement("textarea");ta.dataset.k=f;ta.value=c[f]||"";ta.rows=Math.min(6,Math.max(1,Math.ceil((c[f]||"").length/40)));
+    ta.onclick=e=>e.stopPropagation();el.replaceWith(ta)});
+  cd.querySelector("textarea").focus();
+}
+function cancelEdit(){mode==="hist"?renderHist():render()}
+async function saveEdit(){
+  const raw=cur(),c=view(raw),fields={};
+  document.querySelectorAll("#cd textarea").forEach(t=>{if(t.value!==(c[t.dataset.k]||""))fields[t.dataset.k]=t.value});
+  if(!Object.keys(fields).length){toast("没有改动");return}
+  try{const r=await api("/api/edit",{card_id:raw.id,fields,reason:$("#rs").value,implicit:implicit()});
+    raw._edited=Object.assign({},raw._edited||{},fields);raw.edit_count=(raw.edit_count||0)+1;
+    toast(`已保存改写（${Object.keys(r.entry.edit_diff).length} 个字段）`+(mode==="hist"?" · 分类不变":" · 现在可以继续分类"));
+    (mode==="hist"?renderHist():render());flip()}
+  catch(e){toast("保存失败："+e.message)}
+}
+async function act(i){
+  if(editing||k>=queue.length)return;
+  const raw=queue[k],a=ACTS[i],body={card_id:raw.id,action:a.key,reason:$("#rs").value,block_topic:$("#bt").value,implicit:implicit()};
+  try{const r=await api("/api/verdict",body);if(r.action)setTimeout(()=>onAction(raw,r.action),260);
+    if(r.ask)setTimeout(()=>{toast(r.ask.error?"追问没有发出："+r.ask.error:(r.ask.message||"已向灵感官追问"),5000);pollJobs()},260);
+    const nc=(r.cancelled_jobs||[]).length+(r.cancelled_asks||[]).length;if(nc)setTimeout(()=>toast(`已否决，并同时取消了这张卡还没结束的 ${nc} 个任务 / 追问`,5000),1900)}
+  catch(e){if(e.status&&e.status<500&&e.status!==403){toast("没有记录："+e.message);return}
+    offline.push(Object.assign({title:raw.title,type:raw.type,subfield:raw.subfield,date:raw.date,minimal_check:view(raw).minimal_check},body));banner()}
+  if(a.key==="ask_detail")raw.asked=true;
+  history.push({id:raw.id,title:view(raw).title,label:a.label,idx:k});
+  $("#cd").classList.add("out");setTimeout(()=>{k++;render()},200);
+}
+function skip(){if(editing||k>=queue.length)return;api("/api/view",{card_id:queue[k].id,implicit:implicit()}).catch(()=>{});queue.push(queue.splice(k,1)[0]);render()}
+async function undo(){
+  const h=history[history.length-1];if(!h)return toast("没有可以撤销的评价");
+  const off=offline.findIndex(o=>o.card_id===h.id);
+  if(off>=0)offline.splice(off,1);else{try{const r=await api("/api/undo",{card_id:h.id,implicit:implicit()});if((r.cancelled_jobs||[]).length)setTimeout(()=>toast(`已取消还没开始的任务 ${r.cancelled_jobs.join("、")}`),1900);pollJobs()}catch(e){return toast("撤销失败："+e.message)}}
+  history.pop();const j=queue.findIndex(c=>c.id===h.id);
+  if(j>=0&&j<k){const c=queue.splice(j,1)[0];queue.splice(k-1,0,c);k=k-1}  // put it right before the next unseen card
+  toast(`已撤销：${h.label}`);banner();render();
+}
+function banner(){const b=$("#banner");if(!offline.length){b.style.display="none";return}
+  b.style.display="block";b.innerHTML=`评价服务连接中断：${offline.length} 条评价暂存在本页。<a class="btn" style="padding:3px 10px;margin-left:8px" id="ex">导出 CSV</a>（之后用 record_verdict.py --batch 导入）`;$("#ex").onclick=exportCsv}
+function exportCsv(){const h="card_id,date,type,subfield,title,one_line,minimal_check,action,reason,block_topic";
+  const q=s=>`"${String(s??"").replace(/"/g,'""')}"`;
+  const rows=offline.map(o=>[o.card_id,o.date,o.type,o.subfield,o.title,"",o.minimal_check,o.action,o.reason,o.block_topic].map(q).join(","));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+[h,...rows].join("\n")],{type:"text/csv"}));a.download="verdict_inbox_offline.csv";a.click()}
+function finish(){
+  $("#pos").textContent="完成";$("#pg").style.width="100%";
+  const n={};history.forEach(h=>n[h.label]=(n[h.label]||0)+1);
+  $("#stage").innerHTML=`<div class="card done"><h2>${queue.length?"这一轮评价完成":"没有待评价的卡片"}</h2>
+   <p class="one">${Object.entries(n).map(([l,v])=>`${esc(l)} ${v}`).join(" · ")||"下一次运行结束后会弹出通知"}</p>
+   <div class="list">${history.slice().reverse().map(h=>`<div><span>${esc(h.title)}</span><b>${esc(h.label)}</b></div>`).join("")}</div>
+   ${history.length?'<p style="margin-top:16px"><button class="btn" id="un">撤销最后一张（Z）</button> <button class="btn" id="rl">刷新</button></p>':'<p style="margin-top:16px"><button class="btn" id="rl">刷新</button></p>'}</div>`;
+  $("#un")&&($("#un").onclick=undo);$("#rl").onclick=()=>{history=[];load()};
+}
+// ---------------------------------------------------------------- v1.5.1 历史：列表 → 详情（翻面 / 翻页 / 改写，不能重新分类）
+function actLabel(c){const a=c.classified_action||c.latest_action;
+  const l=(ACTS.find(x=>x.key===a)||{}).label||({edited:"改写",ask_detail:"追问"}[a]||a||"—");return l+(c.edit_count?" · 已改写":"")}
+function fmt(iso){if(!iso)return"—";const d=new Date(iso);return isNaN(d)?String(iso).slice(0,16):`${d.getMonth()+1}/${d.getDate()} ${d.toTimeString().slice(0,5)}`}
+async function showHistory(){
+  try{const d=await api("/api/cards?scope=all");if(!ACTS.length){ACTS=d.actions;HIDDEN=d.hidden||[]}EDITABLE=d.editable;total=d.total;
+    hist.list=d.cards.filter(c=>c.latest_action).sort((a,b)=>String(b.verdict_ts||"").localeCompare(String(a.verdict_ts||"")));
+    hist.i=Math.min(hist.i,Math.max(0,hist.list.length-1));drawHistList()}
+  catch(e){toast(e.message)}
+}
+function drawHistList(){
+  mode="histlist";editing=false;$("#pos").textContent="历史";$("#pg").style.width="100%";
+  $("#stage").innerHTML=`<div class="card done"><h2>已评价 ${hist.list.length} / ${total}</h2><p class="meta">点任意一条查看详情：可以翻面、翻页、改写；分类不在这里改。</p>
+    <div class="list">${hist.list.map((c,i)=>`<div class="row" data-i="${i}"><span><span class="lt">${esc(fmt(c.verdict_ts))}</span>${esc(view(c).title)}</span><b>${esc(actLabel(c))}</b></div>`).join("")}</div>
+    <p style="margin-top:16px"><button class="btn" id="bk">返回评价</button></p></div>`;
+  document.querySelectorAll(".list .row").forEach(r=>r.onclick=()=>{hist.i=+r.dataset.i;renderHist()});
+  $("#bk").onclick=load;
+}
+function renderHist(){
+  if(!hist.list.length)return drawHistList();
+  mode="hist";editing=false;flipped=false;t0=Date.now();
+  const raw=hist.list[hist.i];
+  $("#pos").textContent=`历史 ${hist.i+1} / ${hist.list.length}`;$("#pg").style.width=((hist.i+1)/hist.list.length*100)+"%";
+  $("#stage").innerHTML=cardHTML(raw)+`
+  <div class="hverd">你的评价：<b>${esc(actLabel(raw))}</b> · ${esc(fmt(raw.verdict_ts))}${raw.verdict_reason?" · 理由："+esc(raw.verdict_reason):""}</div>
+  <div class="inputs"><input id="rs" placeholder="改写理由（可选）"></div>
+  <div class="hnav"><button class="btn" id="hp">← 上一张</button><button class="btn" id="hl">返回列表 Esc</button><button class="btn" id="he">改写 E</button><button class="btn" id="hn">下一张 →</button></div>
+  <div class="keys">空格 翻面 · E 改写 · ←/→ 翻页 · Esc 返回列表</div>`;
+  bindCard();
+  $("#hp").onclick=()=>histMove(-1);$("#hn").onclick=()=>histMove(1);$("#hl").onclick=drawHistList;$("#he").onclick=startEdit;
+  $("#hp").disabled=hist.i===0;$("#hn").disabled=hist.i>=hist.list.length-1;
+}
+function histMove(d){if(editing)return;const n=hist.i+d;if(n<0||n>=hist.list.length)return toast(d<0?"已经是第一张":"已经是最后一张");hist.i=n;renderHist()}
+
+// ---------------------------------------------------------------- v1.5.1 立刻动手：动手单 + 回执
+const BF=[["scene","场景","研究对象 + 子领域"],["method","方法","建立什么模型 / 用什么手段求解"],["output","产出","可量化的指标或可观测现象"],["baseline","对照","基线是什么"],["criterion","判据","产出与基线满足什么关系才算成立"]];
+const SRC={library:"资料/文献",observed:"本地观察/实测",user:"你提供"};
+const ORIGIN={card:"灵感官写的",derived:"按卡片自动生成",user_edit:"你改过的"};
+const STZ={queued:"排队中",planning:"写方案中",running:"执行中",needs_approval:"等你批准",approved:"已批准，执行中",succeeded:"已完成",failed:"失败",timeout:"超时",blocked:"被卡住",plan_ready:"方案已就绪（需要你亲自做）",cancelled:"已取消",rejected_plan:"方案被否"};
+const CONZ={supported:"成立",refuted:"不成立",inconclusive:"无定论",plan_only:"只出了方案",failed:"失败",timeout:"超时",blocked:"被卡住"};
+function onAction(raw,a){
+  if(a.error)return toast("已记录“立刻动手”，但没有建任务："+a.error,6000);
+  if(a.needs_input)return openBrief(raw.id,view(raw).title,a.brief,a.message);
+  if(a.job_id){toast(`已建任务 ${a.tier||""} ${a.tier_label||""}：${a.message||""}`,5000);pollJobs();return}
+  if(a.message)toast(a.message,4000);
+}
+function openBrief(cid,title,b,msg){BRIEF={card_id:cid,title,brief:JSON.parse(JSON.stringify(b||{}))};drawBrief(msg);$("#modal").classList.add("on")}
+function closeBrief(){$("#modal").classList.remove("on");$("#modal").innerHTML="";if(BRIEF)toast("动手单还没提交：随时在“回执 → 待补动手单”里继续",4000);BRIEF=null;pollJobs()}
+function drawBrief(msg){
+  const b=BRIEF.brief,ps=(b.params&&b.params.length?b.params:[{name:"",value:"",unit:"",source:"user"}]),miss=b.missing||[],probs=b.problems||[];
+  const ta=(k,l,ph)=>`<label>${l}</label><textarea data-b="${k}" rows="2" placeholder="${esc(ph)}">${esc(b[k]||"")}</textarea>`;
+  $("#modal").innerHTML=`<div class="mbox">
+    <div class="tags"><b>动手单</b><span>${esc(ORIGIN[b.origin]||b.origin||"")}</span></div>
+    <h3>${esc(BRIEF.title)}</h3>
+    ${msg?`<p class="merr">${esc(msg)}</p>`:""}${probs.length?`<p class="merr">${probs.map(esc).join("\n")}</p>`:""}
+    ${ta(...BF[0])}
+    <label>参数（数值 + 单位 + 来源；来源“你提供”且数值为空 = 开跑前要你填）</label>
+    <div id="prs">${ps.map((p,i)=>`<div class="prow${p.source==="user"&&!p.value||miss.includes(p.name)?" need":""}">
+      <input data-f="name" value="${esc(p.name)}" placeholder="名称"><input data-f="value" value="${esc(p.value)}" placeholder="${p.source==="user"?"请填写":"数值"}">
+      <input data-f="unit" value="${esc(p.unit)}" placeholder="单位"><select data-f="source">${Object.entries(SRC).map(([k,v])=>`<option value="${k}"${p.source===k?" selected":""}>${v}</option>`).join("")}</select>
+      <span class="x" data-del="${i}" title="删除">×</span></div>`).join("")}</div>
+    <a class="btn" id="padd" style="padding:3px 10px;font-size:12px">+ 加一项</a>
+    ${BF.slice(1).map(x=>ta(...x)).join("")}
+    <label>交付（一行一个文件，带扩展名）</label><textarea data-b="deliverables" rows="3">${esc((b.deliverables||[]).join("\n"))}</textarea>
+    <div class="hnav"><button class="btn" id="bcx">稍后再填 Esc</button><button class="btn pri" id="bgo">确认开跑 Ctrl+Enter</button></div></div>`;
+  $("#padd").onclick=()=>{collectBrief();BRIEF.brief.params=(BRIEF.brief.params||[]).concat([{name:"",value:"",unit:"",source:"user"}]);drawBrief(msg)};
+  document.querySelectorAll("#prs [data-del]").forEach(x=>x.onclick=()=>{collectBrief();BRIEF.brief.params.splice(+x.dataset.del,1);drawBrief(msg)});
+  $("#bcx").onclick=closeBrief;$("#bgo").onclick=submitBrief;
+  const first=document.querySelector("#prs .need input[data-f=value]");(first||document.querySelector("#modal textarea")).focus();
+}
+function collectBrief(){
+  const b=BRIEF.brief;document.querySelectorAll("#modal [data-b]").forEach(el=>{b[el.dataset.b]=el.dataset.b==="deliverables"?el.value.split("\n").map(s=>s.trim()).filter(Boolean):el.value.trim()});
+  b.params=[...document.querySelectorAll("#prs .prow")].map(r=>{const o={};r.querySelectorAll("[data-f]").forEach(x=>o[x.dataset.f]=x.value.trim());return o}).filter(p=>p.name||p.value);
+  return b;
+}
+async function submitBrief(){
+  if(!BRIEF)return;const b=collectBrief();
+  const send={scene:b.scene,params:b.params,method:b.method,output:b.output,baseline:b.baseline,criterion:b.criterion,deliverables:b.deliverables};
+  try{const r=await api("/api/action/start",{card_id:BRIEF.card_id,brief:send});BRIEF=null;$("#modal").classList.remove("on");
+    toast(r.job_id?`已建任务 ${r.tier} ${r.tier_label}：${r.message||""}`:(r.message||"已提交"),5000);pollJobs();if(mode==="rcpt")showReceipts()}
+  catch(e){const nb=e.body&&e.body.brief;if(nb){BRIEF.brief=Object.assign(nb,{origin:"user_edit"});drawBrief(e.body.message||e.message)}else toast("没能开跑："+e.message,5000)}
+}
+function briefList(b){if(!b)return"";
+  return `<ul class="bl">${BF.slice(0,1).map(([k,l])=>`<li>${l}：${esc(b[k])}</li>`).join("")}<li>参数：${(b.params||[]).map(p=>`${esc(p.name)} = ${esc(p.value||"（待填）")} ${esc(p.unit)}（${esc(SRC[p.source]||p.source)}）`).join("；")}</li>${BF.slice(1).map(([k,l])=>`<li>${l}：${esc(b[k])}</li>`).join("")}<li>交付：${esc((b.deliverables||[]).join("、"))}</li></ul>`}
+let RFOCUS=null;
+async function showReceipts(focus){
+  const jump=typeof focus==="string";if(jump)RFOCUS=focus;else if(mode!=="rcpt")RFOCUS=null;focus=RFOCUS;
+  mode="rcpt";editing=false;$("#pos").textContent="回执";$("#pg").style.width="100%";
+  let d;try{d=await api("/api/actions")}catch(e){$("#stage").innerHTML=`<div class="card done"><h2>回执</h2><p class="one">${esc(e.message)}</p><p><button class="btn" id="bk">返回评价</button></p></div>`;$("#bk").onclick=load;return}
+  if(!d.enabled){$("#stage").innerHTML=`<div class="card done"><h2>回执</h2><p class="one">${esc(d.message||"")}</p><p><button class="btn" id="bk">返回评价</button></p></div>`;$("#bk").onclick=load;return}
+  const pend=(d.pending_briefs||[]).map(p=>`<div class="job"><div class="jt"><span>${esc(p.title)}</span><span class="st w">待补动手单</span></div>
+     <div class="jm">${esc(fmt(p.ts))} 按了“立刻动手”，还缺你提供的参数</div><div class="jb"><button class="btn pri" data-brief="${esc(p.card_id)}" data-title="${esc(p.title)}">填写动手单</button></div></div>`).join("");
+  const jobs=d.jobs.map(j=>{const r=j.receipt||{},br=r.brief_result||{},st=j.status;
+    const cls=st==="succeeded"?"ok":["failed","timeout","blocked"].includes(st)?"bad":j.awaiting?"w":"";
+    const ck=(j.checks||[]);
+    return `<div class="job${focus===j.job_id?" hl":""}" id="job-${esc(j.job_id)}"><div class="jt"><span>${esc(j.card_title)}</span><span class="st ${cls}">${esc(j.tier)} · ${esc(j.cancel_text||STZ[st]||st)}${j.ack?" · "+esc({accept:"结果可用",rerun:"需要重跑",discard:"结果作废"}[j.ack.result]||j.ack.result):""}</span></div>
+      <div class="jm">${esc(j.tier_label||"")} · 建于 ${esc(fmt(j.created_at))}${j.cancelled_at?" · 取消于 "+esc(fmt(j.cancelled_at)):""}${j.finished_at?" · "+(st==="cancelled"?"平台运行结束 ":"结束 ")+esc(fmt(j.finished_at)):""}${j.thread_url?` · <a href="${esc(j.thread_url)}" target="_blank" rel="noopener">打开会话 ↗</a>`:""}</div>
+      ${r.conclusion?`<div class="jr">结论：${esc(CONZ[r.conclusion]||r.conclusion)}${r.all_checks_ok===false?"（有检查未通过）":""}${r.summary?"\n"+esc(r.summary):""}${br.output_measured?`\n产出实测：${esc(br.output_measured)} · 对照实测：${esc(br.baseline_measured||"—")} · 判据：${br.criterion_met===true?"满足":br.criterion_met===false?"不满足":"未给出"}`:""}</div>`:""}
+      ${j.error?`<div class="jr" style="color:var(--no)">${esc(j.error)}</div>`:""}
+      ${ck.length?`<div class="chk">${ck.map(x=>`<span class="${x.ok?"":"no"}">${x.ok?"通过":"未通过"}：${esc(x.name)}</span>`).join(" · ")}</div>`:""}
+      ${j.brief?`<details><summary>动手单（${esc(ORIGIN[j.brief.origin]||j.brief.origin||"")}）</summary>${briefList(j.brief)}</details>`:""}
+      ${j.has_receipt?`<div class="jm">完整回执：<a href="#" data-rv="${esc(j.job_id)}" data-what="file" title="用本机默认程序打开 receipt.md">receipt.md</a> · <a href="#" data-rv="${esc(j.job_id)}" data-what="folder" title="在文件管理器里打开这个任务的文件夹">打开所在文件夹</a></div>`:""}
+      <div class="jb">${j.awaiting==="approve"?`<button class="btn pri" data-ap="${esc(j.job_id)}">批准执行</button>`:""}
+        ${j.awaiting==="ack"?["accept","rerun","discard"].map(x=>`<button class="btn${x==="accept"?" pri":""}" data-ack="${x}" data-j="${esc(j.job_id)}">${{accept:"结果可用",rerun:"需要重跑",discard:"结果作废"}[x]}</button>`).join(""):""}</div></div>`}).join("");
+  $("#stage").innerHTML=`<div class="card done" style="text-align:left"><h2 style="text-align:center">立刻动手 · 任务回执</h2>
+    <p class="meta" style="text-align:center">${d.running?`${d.running} 个任务进行中（每 15 秒刷新）· `:""}在评价时按 6“立刻动手”就会出现在这里</p>
+    ${pend||jobs?pend+jobs:'<p class="one" style="text-align:center">还没有任务</p>'}
+    ${askHTML(d.asks||[],focus)}
+    <p style="margin-top:16px;text-align:center"><button class="btn" id="rf">刷新</button> <button class="btn" id="bk">返回评价</button></p></div>`;
+  $("#bk").onclick=load;$("#rf").onclick=()=>showReceipts();
+  document.querySelectorAll("[data-rv]").forEach(a=>a.onclick=async ev=>{ev.preventDefault();
+    try{const r=await api("/api/action/reveal",{job_id:a.dataset.rv,what:a.dataset.what});toast(r.opened==="file"?"已在本机打开回执":"已在本机打开所在文件夹")}catch(e){toast("没能打开："+e.message)}});
+  if(jump){const el=document.getElementById("job-"+focus)||document.getElementById("ask-"+focus);if(el)el.scrollIntoView({block:"center"});else toast("没找到这条任务（可能已被清理）")}
+  document.querySelectorAll("[data-brief]").forEach(b=>b.onclick=async()=>{try{const r=await api("/api/action/brief?card_id="+encodeURIComponent(b.dataset.brief));openBrief(b.dataset.brief,b.dataset.title,r.brief,"")}catch(e){toast(e.message)}});
+  document.querySelectorAll("[data-ap]").forEach(b=>b.onclick=async()=>{if(!confirm("批准按方案执行？"))return;try{await api("/api/action/approve",{job_id:b.dataset.ap});toast("已批准，开始执行");showReceipts()}catch(e){toast(e.message)}});
+  document.querySelectorAll("[data-askretry]").forEach(b=>b.onclick=async()=>{b.disabled=true;
+    try{const r=await api("/api/ask/retry",{ask_id:b.dataset.askretry});toast(r.message||"已重新追问",4000);setTimeout(()=>showReceipts(),400)}
+    catch(e){b.disabled=false;toast("没能重试："+e.message,5000)}});
+  document.querySelectorAll("[data-ack]").forEach(b=>b.onclick=async()=>{const note=b.dataset.ack==="accept"?"":(prompt("补一句说明（可选）")||"");
+    try{await api("/api/action/ack",{job_id:b.dataset.j,result:b.dataset.ack,note});toast("已记录");showReceipts()}catch(e){toast(e.message)}});
+}
+function askHTML(asks,focus){   // v1.5.3: 追问细节 conversations
+  if(!asks.length)return "";
+  return `<h3 style="margin:22px 0 6px">追问细节 · 对话</h3>`+asks.map(a=>{const cls=a.status==="answered"?"ok":["failed","timeout"].includes(a.status)?"bad":"";
+    return `<div class="job${focus===a.ask_id?" hl":""}" id="ask-${esc(a.ask_id)}"><div class="jt"><span>${esc(a.card_title||a.card_id)}</span><span class="st ${cls}">${esc(a.status_text)}${a.cancel_why?" · 因"+esc(a.cancel_why):""}</span></div>
+      <div class="jm">问于 ${esc(fmt(a.created_at))}${a.finished_at?" · 回答于 "+esc(fmt(a.finished_at)):""}${a.thread_url?` · <a href="${esc(a.thread_url)}" target="_blank" rel="noopener" onclick="markAskSeen('${esc(a.ask_id)}')">打开对话 ↗</a>`:""}</div>
+      ${a.answer?`<div class="jr">${esc(a.answer)}</div>`:""}${a.note?`<div class="jm">${esc(a.note)}</div>`:""}${a.error?`<div class="jr" style="color:var(--no)">${esc(a.error)}</div>`:""}${a.retryable?`<div class="jb"><button class="btn" data-askretry="${esc(a.ask_id)}">重试追问</button></div>`:""}</div>`}).join("")}
+async function pollJobs(){
+  try{const d=await api("/api/actions");if(!d.enabled)return;
+    $("#rcb").textContent=d.awaiting?String(d.awaiting):"";
+    const now={};d.jobs.forEach(j=>now[j.job_id]=j.status);
+    if(JOBS.seen){for(const j of d.jobs){const was=JOBS.seen[j.job_id];
+      if(was&&was!==j.status&&(["succeeded","failed","timeout","blocked","plan_ready","needs_approval"].includes(j.status)))
+        toast(`任务「${j.card_title}」${STZ[j.status]||j.status} · 点这里查看回执`,8000,()=>showReceipts(j.job_id))}}
+    const an={};(d.asks||[]).forEach(a=>an[a.ask_id]=a.status);
+    {/* v1.5.5 (P3): only the NEWEST unread answer pops up; opening it marks every unread answer as seen */
+      const unread=(d.asks||[]).filter(a=>a.status==="answered"&&!askSeen(a.ask_id)&&Date.now()-Date.parse(a.finished_at||a.created_at||0)<864e5)
+        .sort((x,y)=>String(y.finished_at||y.created_at).localeCompare(String(x.finished_at||x.created_at)));
+      const top=unread[0];
+      if(top&&!ASKS.shown[top.ask_id]){ASKS.shown[top.ask_id]=1;const more=unread.length-1;
+        toast(`来聊聊新的idea吧 ·「${top.card_title}」· 点这里打开对话`+(more>0?`（另有 ${more} 条未读追问在回执里）`:""),30000,
+          ()=>{unread.forEach(a=>markAskSeen(a.ask_id));top.thread_url?window.open(top.thread_url,"_blank","noopener"):showReceipts(top.ask_id)})}
+     for(const a of d.asks||[]){const was=ASKS.seen?ASKS.seen[a.ask_id]:undefined;
+      if(false){}
+      else if(was&&was!==a.status&&["failed","timeout"].includes(a.status))toast(`追问「${a.card_title}」${a.status_text} · 点这里查看`,8000,()=>showReceipts(a.ask_id))}}
+    const askChanged=JSON.stringify(an)!==JSON.stringify(ASKS.seen);ASKS.seen=an;
+    const changed=JSON.stringify(now)!==JSON.stringify(JOBS.seen)||askChanged;JOBS.seen=now;
+    if(changed&&mode==="rcpt"&&!$("#modal").classList.contains("on"))showReceipts();
+  }catch(e){}
+}
+$("#hist").onclick=()=>{if(!editing)showHistory()};
+$("#rcpt").onclick=()=>{if(!editing)showReceipts()};
+// v1.5.2: a "立刻动手" notification opens /?t=…&act=<job_id> → go straight to the receipts view, highlight that job
+const ACT=new URLSearchParams(location.search).get("act")||new URLSearchParams(location.search).get("ask");   // v1.5.3: ask=<ask_id> too
+if(ACT){try{const u=new URL(location.href);u.searchParams.delete("act");u.searchParams.delete("ask");window.history.replaceState(null,"",u)}catch(e){}}
+$("#help").onclick=()=>toast("空格 翻面 · "+keyHint()+" · E 改写 · Ctrl+Enter 保存 · Z 撤销 · → 跳过 · 历史详情里 ←/→ 翻页、Esc 返回",5000);
+document.addEventListener("keydown",e=>{
+  if($("#modal").classList.contains("on")){if(e.key==="Escape"){e.preventDefault();closeBrief()}else if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();submitBrief()}return}
+  const inField=["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName);
+  if(editing){if(e.key==="Escape"){e.preventDefault();cancelEdit()}else if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();saveEdit()}return}
+  if(inField){if(e.key==="Escape")e.target.blur();return}
+  if(mode==="hist"){
+    if(e.key===" "){e.preventDefault();flip()}else if(e.key.toLowerCase()==="e"){e.preventDefault();startEdit()}
+    else if(e.key==="ArrowRight")histMove(1);else if(e.key==="ArrowLeft")histMove(-1);else if(e.key==="Escape")drawHistList();
+    return}
+  if(mode==="histlist"||mode==="rcpt"){if(e.key==="Escape")load();return}
+  if(e.key===" "){e.preventDefault();k<queue.length&&flip()}
+  else if(e.key>="1"&&e.key<="6"){if(shown(+e.key-1))act(+e.key-1)}   // v1.5.3: hidden buttons have no hotkey either
+  else if(e.key.toLowerCase()==="e"){e.preventDefault();startEdit()}
+  else if(e.key.toLowerCase()==="z")undo();
+  else if(e.key==="ArrowRight")skip();
+});
+window.addEventListener("beforeunload",e=>{if(offline.length){e.preventDefault();e.returnValue=""}});
+if(ACT)load().then(()=>showReceipts(ACT));else load();
+// ---------------------------------------------------------------- v1.4 自动同步：按钮 + 新卡片提示
+const RCV={base:null,last:null,busyUntil:0,title:document.title};
+function hhmm(iso){if(!iso)return"-";const d=new Date(iso);return isNaN(d)?String(iso).slice(11,16):d.toTimeString().slice(0,5)}
+function renderRcv(st){
+  const el=$("#rcv"),rb=$("#runbtn"),cb=$("#chk");
+  if(!st||!st.enabled){el.innerHTML='<span>自动同步未启用：用 <code>review_server.py --config config.json --open</code> 启动后，网页里 @灵感官 的结果才会自动出现</span>';rb.classList.add("off");cb.classList.add("off");return}
+  cb.classList.remove("off");
+  const running=(st.pending||0)>0||Date.now()<RCV.busyUntil;
+  rb.classList.toggle("off",running);rb.textContent=running?"灵感官运行中…":"主动探索灵感";
+  const L=[`自动同步 · 上次检查 ${hhmm(st.last_poll)}`];
+  if(running)L.push(`运行中 ${st.pending||1} 次`+(st.last_trigger&&st.last_trigger.fetch_mode?`（${st.last_trigger.fetch_mode==="fulltext"?"全文模式，较慢":"摘要模式"}）`:"")+(st.last_trigger&&st.last_trigger.url?` · <a href="${esc(st.last_trigger.url)}" target="_blank">打开会话</a>`:""));
+  if(st.discovery==="pinned_only")L.push('<span class="err">只能收按钮触发的运行（网页会话列表不可读'+(st.credentials&&!st.credentials.session_token?'：缺会话令牌':'')+'）</span>');
+  if(st.credentials&&!st.credentials.session_token)L.push('<span title="没有 ~/.sciencepal/session_token：结果改从沙箱接口/回复里取，状态回写与记忆同步不可用">仅 API Key</span>');
+  // v1.4.5 (feedback6): the platform may still show "任务已中断" after the cards are in; tell the user not to resume
+  const lr=st.last_result;
+  if(lr&&lr.at&&(lr.status==="OK"||lr.status==="NO_CANDIDATES")&&Date.now()-Date.parse(lr.at)<12*3600e3)
+    L.push(`<span title="平台在运行收尾时可能仍显示“任务已中断”：那是交付校验的告警，结果已经收到。点“从断点继续”只会再跑一轮、被去重挡住">最近结果 ${hhmm(lr.at)} 已入库（${lr.status==="OK"?(lr.cards||0)+" 张":"无新卡"}）· 网页若显示“任务已中断”，不用点“从断点继续”</span>`);
+  // v1.5.5 (P9): a run that ended before writing its cards
+  const rs=st.rescue;
+  if(rs&&rs.at&&rs.status==="CONTINUED"&&Date.now()-Date.parse(rs.at)<3600e3)
+    L.push(`上一轮在写卡片前就结束了，已在同一会话自动续跑一次（${hhmm(rs.at)}）`+(rs.url?` · <a href="${esc(rs.url)}" target="_blank" rel="noopener">打开会话</a>`:""));
+  if(rs&&rs.at&&rs.status==="NO_OUTPUT"&&Date.now()-Date.parse(rs.at)<12*3600e3&&!(lr&&lr.at&&Date.parse(lr.at)>Date.parse(rs.at)))
+    L.push(`<span class="err">${hhmm(rs.at)} 那一轮没有产出卡片（模型在写卡片前结束，自动续跑后仍没有）。候选没有被消耗，点“主动探索灵感”重跑即可</span>`+(rs.url?` · <a href="${esc(rs.url)}" target="_blank" rel="noopener">打开会话</a>`:""));
+  // v1.5.5 (P10/P11): the A-class channel and the web-entry snapshot
+  const as=st.a_status;
+  if(as){const t=`A 类候选：待用 ${as.a_open}（已出卡 ${as.a_pushed} · 已否决 ${as.a_rejected}${as.a_closed?` · 已关闭 ${as.a_closed}`:""}，本地观察共 ${as.observed} 条）`;
+    L.push(as.a_open>0?t:`<span title="本地观察里的优化类发现都已经出过卡或被否决。往 library/ 放新代码 / 日志 / 数据，或等出卡 14 天后仍未修复的会以“仍未修复”再提醒一次">${t} → 下一轮没有新的 A 类</span>`)}
+  const sn=st.snapshot;
+  if(sn&&sn.status==="published")L.push(`<span title="网页里直接对灵感官说“主动探索灵感”时用的本地状态">网页入口快照 ${hhmm(sn.at)}（本地观察 ${sn.observed||0} 条）</span>`);
+  else if(sn&&(sn.status==="error"||sn.status==="no_token"))L.push(`<span class="err" title="${esc(sn.message||"")}">网页入口快照没发布：网页里直接说“主动探索灵感”不会有 A 类卡</span>`);
+  const err=st.account_problem||st.error||st.profile_error;
+  el.innerHTML=`<span>${L.join(" · ")}</span>`+(err?`<span class="err">${esc(err)}</span>`:"");
+}
+function showNew(n){const b=$("#newb");
+  if(n<=0){b.style.display="none";document.title=RCV.title;return}
+  b.style.display="block";b.textContent=`新到 ${n} 张卡片 · 点击载入`;document.title=`(${n}) `+RCV.title;
+  b.onclick=()=>{RCV.base=RCV.last;showNew(0);load()};
+}
+async function pollRcv(){
+  try{const st=await api("/api/receiver/status");RCV.last=st.total_cards||0;if(RCV.base===null)RCV.base=RCV.last;
+    renderRcv(st);const n=RCV.last-RCV.base;
+    if(n>0){if(mode==="queue"&&k>=queue.length&&!editing){RCV.base=RCV.last;showNew(0);toast(`新到 ${n} 张卡片`);load()}else showNew(n)}
+  }catch(e){renderRcv(null)}
+}
+// v1.4.3 (feedback5 3.3): load() may re-render the bar and replace these elements, so bind by event delegation
+async function onRunClick(){
+  if($("#runbtn").classList.contains("off")){toast("灵感官正在运行，结果出来前不要重复触发");return}
+  if(!confirm("让灵感官现在跑一次？\n大约 5–15 分钟，会消耗一次运行的 token；结果出来后这里会自动提示。"))return;
+  $("#runbtn").classList.add("off");
+  try{const r=await api("/api/run",{});RCV.busyUntil=Date.now()+15*60e3;toast(r.message||"已触发");pollRcv()}
+  catch(e){toast("没能触发："+e.message)}
+}
+async function onChkClick(){try{const r=await api("/api/receiver/check",{});toast(r.message||"正在检查…");setTimeout(pollRcv,4000)}catch(e){toast(e.message)}}
+document.addEventListener("click",e=>{const t=e.target&&e.target.closest?e.target.closest("#runbtn,#chk"):null;if(!t)return;
+  e.preventDefault();if(t.id==="runbtn")onRunClick();else onChkClick()});
+pollRcv();setInterval(pollRcv,20000);
+pollJobs();setInterval(pollJobs,15000);
+</script></body></html>

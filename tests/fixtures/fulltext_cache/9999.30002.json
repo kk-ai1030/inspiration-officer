@@ -1,0 +1,16 @@
+{
+  "ref": "9999.30002",
+  "status": "ok",
+  "method": "html",
+  "url": "https://arxiv.org/html/9999.30002",
+  "title": "Always-On Experience Injection",
+  "chars": 4468,
+  "body_chars": 4468,
+  "sections": [
+    "Always-On Experience Injection",
+    "Abstract",
+    "4 Results",
+    "References"
+  ],
+  "sha256": "c88a8f7421a374af85abb7b26396c34b5f4bf1699f44d256043a1087cdb18d13"
+}
