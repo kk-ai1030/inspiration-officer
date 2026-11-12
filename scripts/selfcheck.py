@@ -275,6 +275,7 @@ SUITES = [
     ("评价页浏览器 U0–U9（v1.5.1，无 playwright 时跳过）", ["tests/ui_e2e_test.py"], None),
     ("采纳后结果回填 B1", ["tests/b1_outcome_test.py"], "B1 OK"),
     ("多来源 L0 B2", ["tests/b2_multi_source_test.py"], "B2 OK"),
+    ("网页周报脱敏摘要 B4", ["tests/b4_weekly_web_test.py"], "B4 OK"),
 ]
 
 

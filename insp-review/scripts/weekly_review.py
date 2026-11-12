@@ -238,8 +238,61 @@ def review(state_dir: Path, today: date, memory: list[dict] | None, config: Path
     L += [f"- `{o['card_id']}`：{str(o['conclusion'])[:80]}" for o in excerpts] or ["- 暂无。"]
     proposals = {"week": tag, "review_id": review_id, "generated_for": today.isoformat(), "proposal": proposal,
                  "type_stats": stats, "feature_stats": feature_stats, "adopted_week_ids": sorted(adopted_week),
-                 "memory_audit_ids": [m.get("id") for m in mem_audit], "outcome_summary": outcome_summary}
+                 "memory_audit_ids": [m.get("id") for m in mem_audit], "outcome_summary": outcome_summary,
+                 # B4: 供 verdict_summary.py 生成脱敏摘要（只取数值，不取 adopted_week_ids / memory_audit_ids）
+                 "adoption": adoption, "repeat_rate": repeat, "implicit_week": len(implicit),
+                 "weights_version": int(weights.get("version", 0))}
     return "\n".join(L) + "\n", proposals
+
+
+SUMMARY_SCHEMA = "insp-verdict-summary/1.0"
+
+
+def render_from_summary(s: dict) -> str:
+    """B4 / K3：网页里只依据本机推送的脱敏摘要渲染周报。
+
+    不读 verdicts.jsonl、不写文件、不提议应用权重；摘要缺失或格式不对时直接抛错，
+    让技能据实回答「周报需要在本地运行」，而不是手算或编造数字。
+    """
+    if not isinstance(s, dict) or s.get("schema") != SUMMARY_SCHEMA:
+        raise ValueError(f"不是有效的脱敏评价摘要（需要 {SUMMARY_SCHEMA}）")
+    ad, rp = s.get("adoption"), s.get("repeat_rate")
+    ad_text = "—（本周无推送）" if ad is None else f"{ad:.0%}"
+    rp_text = "—" if rp is None else f"{rp:.0%}"
+    prop = s.get("proposal") or {}
+    L = ["# 灵感机制周报（网页版 · 脱敏摘要）", "",
+         f"周次：{s.get('week')} · 生成于 {s.get('generated_at')}", "",
+         "> 本页只依据本机推送的脱敏聚合摘要渲染；没有评价原文、卡片标题、引文和记忆内容。",
+         "> 权重调整必须在本地确认后执行，网页里不会改任何权重或记忆。", "",
+         "## 1. 两个核心指标", "", "| 指标 | 数值 | 健康区间 |", "|---|---|---|",
+         f"| 采纳率 | {ad_text} | 20%–60% |",
+         f"| 两周重复率 | {rp_text} | ≈ 0 |", "",
+         "## 2. 各特征采纳率（贝叶斯平均）", "",
+         "| 维度 | 取值 | n | p̂ | 建议 Δw | 够样本 |", "|---|---|---|---|---|---|"]
+    for dim, vals in (s.get("feature_stats") or {}).items():
+        for t, st in vals.items():
+            L.append(f"| {dim} | {t} | {st.get('n')} | {st.get('p_hat')} | {st.get('delta')} | "
+                     f"{'是' if st.get('eligible') else '否'} |")
+    L += ["", "## 3. 本周权重调整提议（只展示，不生效）", ""]
+    if prop:
+        ev = prop.get("evidence") or {}
+        L.append(f"- 提议：`{prop.get('dimension')}={prop.get('key')}` {prop.get('from')} → "
+                 f"**{prop.get('to')}**（p̂={ev.get('p_hat')}, n={ev.get('n')}）。未确认，网页不会应用。")
+    else:
+        L.append("- 本周没有满足门槛的调整。")
+    L += ["", "## 4. 隐式信号与采纳后结果", "",
+          f"- 本周隐式信号 {s.get('implicit_week', 0)} 条（只问不改）。"]
+    oc = s.get("outcome_summary") or {}
+    if oc.get("total"):
+        by = oc.get("by_outcome") or {}
+        L.append(f"- 已采纳建议回填 {oc['total']} 张：成立 {by.get('confirmed', 0)} · 不成立 {by.get('refuted', 0)} · "
+                 f"没做 {by.get('abandoned', 0)} · 待定 {by.get('unknown', 0)}；结论成立率 {oc.get('confirmed_rate')}。")
+    else:
+        L.append("- 还没有采纳后结果回填。")
+    L += ["", "## 5. 边界", "",
+          "- 没有摘要时应直接说明「周报需要在本地运行」，不得手算、不得编造数字。",
+          "- 记忆审计、权重应用、记忆删除都不在网页里做。"]
+    return "\n".join(L) + "\n"
 
 
 def apply(state_dir: Path, proposals_file: Path) -> str:
@@ -335,9 +388,18 @@ def main() -> int:
     ap.add_argument("--confirm", action="store_true", help="与 --apply 搭配：我已读过周报，确认这条提议（等价于把 confirmed 改成 true）")
     ap.add_argument("--config", type=Path, help="config.json（含 weights 段：事件权重 + 学习参数）；也可用环境变量 INSP_CONFIG")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--summary", type=Path,
+                    help="B4：只读脱敏评价摘要渲染网页周报（不需要 verdicts.jsonl，不写文件、不改权重）")
     a = ap.parse_args()
     if a.self_test:
         return self_test()
+    if a.summary:
+        try:
+            print(render_from_summary(json.loads(a.summary.read_text(encoding="utf-8"))), end="")
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        return 0
     if not a.state_dir:
         ap.error("需要 --state-dir")
     if a.rollback:

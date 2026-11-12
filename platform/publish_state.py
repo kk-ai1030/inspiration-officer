@@ -37,7 +37,8 @@ PKG = HERE.parent
 SKILL = "insp-nightly"
 SKILLS = ["insp-init", "insp-triage", "insp-card", "insp-feedback", "insp-review", "insp-nightly", "insp-profile"]
 STATE_FILES = ["state.json", "negative.jsonl", "taste/rubric.md", "taste/weights.json",
-               "profile/interests.md", "profile/claims.md", "profile/observed.md", "observed.jsonl"]
+               "profile/interests.md", "profile/claims.md", "profile/observed.md", "observed.jsonl",
+               "verdict_summary.json"]  # B4 / K3: 脱敏周报摘要；不存在时 state_files() 自动跳过
 MAX_FILE = 2_000_000   # a runaway file must not blow up the skill upload
 
 

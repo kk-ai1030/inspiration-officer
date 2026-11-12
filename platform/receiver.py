@@ -566,9 +566,21 @@ def _ingest(ctx: Ctx, src, origin: dict | None = None, reply_bytes: bytes | None
 STATE_FILES = ["state.json", "negative.jsonl", "taste/rubric.md", "taste/weights.json",
                "profile/interests.md", "profile/claims.md", "profile/observed.md",
                "observed.jsonl"]  # v1.5: local observers' findings (platform/observe.py) → sandbox observed channel
+SUMMARY_FILE = "verdict_summary.json"  # B4 / K3: 脱敏周报摘要，只在文件存在时一起推（原始 verdicts.jsonl 永不上传）
+
+
+def state_files_for(ctx: Ctx) -> list[str]:
+    """B4：摘要是运行时生成的，缺省不存在时文件集合与旧版逐字一致。"""
+    return STATE_FILES + ([SUMMARY_FILE] if (ctx.state_dir / SUMMARY_FILE).is_file() else [])
 
 
 def sync_back(ctx: Ctx, src) -> None:
+    # B4 / K3: 入库成功后刷新脱敏评价摘要，网页里做周报才有可信数据源（失败不影响收货）
+    try:
+        vs = sys.modules.get("verdict_summary_rc") or _load("platform/verdict_summary.py", "verdict_summary_rc")
+        vs.write(ctx.state_dir, ctx.cfg_path)
+    except Exception as exc:  # noqa: BLE001 - best effort; 本地状态仍是权威
+        print("WARN 脱敏周报摘要未生成：", f"{type(exc).__name__}: {str(exc)[:200]}")
     if src.thread_id and ctx.rc.get("push_state", True):
         try:
             n = push_state(ctx, src.sp, src.thread_id, sandbox_id=getattr(src, "sandbox_id", None) or sandbox_of(ctx, src.thread_id))
@@ -639,7 +651,7 @@ def push_state(ctx: Ctx, sp, thread_id: str, sandbox_id: str | None = None) -> i
         raise RuntimeError(f"拿不到会话 {thread_id[:8]} 的 sandbox_id")
     home = ctx.rc["state_home"].rstrip("/")
     n = 0
-    for rel in STATE_FILES:
+    for rel in state_files_for(ctx):
         p = ctx.state_dir / rel
         if p.is_file():
             sp.write_sandbox_file(sid, f"{home}/{rel}", p.read_bytes() or b"\n", name=Path(rel).name)
@@ -1077,7 +1089,7 @@ def stage_state(ctx: Ctx, run_dir: Path) -> list[Path]:
     att = run_dir / "attach"
     att.mkdir(parents=True, exist_ok=True)
     out = []
-    for rel in STATE_FILES:
+    for rel in state_files_for(ctx):
         p = ctx.state_dir / rel
         if p.is_file():
             dst = att / Path(rel).name

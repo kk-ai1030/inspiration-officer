@@ -40,14 +40,27 @@ python3 <insp-review 目录>/scripts/weekly_review.py --state-dir inspiration/ \
   --apply inspiration/reports/proposals_<周>.json
 ```
 
-## 在平台对话中运行时
+## 在平台对话中运行时（B4 / K3）
 
-agent 拿到附件（state.json、verdicts.jsonl、weights.json，以及可选的 memory.json）后：
+**评价原文 `verdicts.jsonl` 永远不出本机**，网页里拿不到它。唯一可信的数据源是本机收货员推送的脱敏聚合摘要 `verdict_summary.json`，位置可能是：
 
-1. 加载本 Skill，在沙箱中运行 `weekly_review.py`（找不到脚本时如实说明，不要手算后声称是脚本结果）；
-2. 原样展示周报；
-3. 在周报末尾补一段**它自己认为本周最有价值的一条卡片**及理由（设计文档 §12）；
-4. **不得**执行 `--apply`，**不得**修改或删除任何记忆。这两件事只能由用户确认后，在本地执行。
+- `/workspace/inspiration_state/verdict_summary.json`（收货员同步回会话沙箱）；
+- `/workspace/_refs/verdict_summary.json`（评价页按钮触发运行时随附件挂载）。
+
+执行顺序：
+
+1. 先找摘要。**两个位置都没有**：直接回答「周报需要在本机运行，网页里没有评价数据」，然后结束；**不得**手算、不得估算、不得编造采纳率 / p̂ / 权重提议，也不得从记忆里凑数字。
+2. 找到摘要后，加载本 Skill，在沙箱里运行：
+
+```bash
+python3 <insp-review 目录>/scripts/weekly_review.py --summary /workspace/inspiration_state/verdict_summary.json
+```
+
+（摘要在附件里时把路径换成 `/workspace/_refs/verdict_summary.json`。脚本找不到或摘要不是 `insp-verdict-summary/1.0` 时如实报错，不要改成自己写一份周报。）
+
+3. 原样展示脚本输出的周报；可以在末尾补一段**它自己认为本周最有价值的一条卡片**及理由（设计文档 §12），但不得改动脚本给出的任何数字。
+4. **不得**执行 `--apply`，**不得**修改或删除任何记忆，不得读取或索要原始评价文件。权重调整与记忆清理只能由用户确认后，在本地执行。
+5. 用户要「按完整数据复盘 / 看评价原文 / 应用权重」时，告诉他本机命令：`python platform/run_weekly.py --config config.json`，以及 `weekly_review.py --apply ... --confirm`。
 
 ## 停止条件
 

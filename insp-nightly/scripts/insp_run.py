@@ -67,7 +67,8 @@ DEF_REFS = Path(os.environ.get("INSP_REFS", "/workspace/_refs"))
 FLAT = {"state.json": "state.json", "negative.jsonl": "negative.jsonl", "verdicts.jsonl": "verdicts.jsonl",
         "rubric.md": "taste/rubric.md", "weights.json": "taste/weights.json", "exemplars.jsonl": "taste/exemplars.jsonl",
         "interests.md": "profile/interests.md", "claims.md": "profile/claims.md", "observed.md": "profile/observed.md",
-        "observed.jsonl": "observed.jsonl"}  # v1.5: findings of the local observers (code / logs / notes / usage)
+        "observed.jsonl": "observed.jsonl",  # v1.5: findings of the local observers (code / logs / notes / usage)
+        "verdict_summary.json": "verdict_summary.json"}  # B4 / K3: 脱敏周报摘要（附件里有才复制）
 
 
 def _load(name: str):
