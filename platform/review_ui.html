@@ -86,6 +86,7 @@ input{background:#181818;border:1px solid var(--line);border-radius:8px;color:va
 </div>
 <div class="toast" id="toast"></div>
 <div class="modal" id="modal"></div>
+<div class="modal" id="omodal"></div>
 <script>
 function askSeen(id){try{return (JSON.parse(localStorage.getItem("insp_ask_seen")||"[]")).includes(id)}catch(e){return false}}
 function markAskSeen(id){try{const s=JSON.parse(localStorage.getItem("insp_ask_seen")||"[]");if(!s.includes(id)){s.push(id);localStorage.setItem("insp_ask_seen",JSON.stringify(s.slice(-300)))}}catch(e){}}
@@ -93,6 +94,8 @@ function markAskSeen(id){try{const s=JSON.parse(localStorage.getItem("insp_ask_s
 const TOKEN="__TOKEN__";
 const SESSION=Math.random().toString(36).slice(2,10);
 const LABEL={knowledge:"知识",hypothesis:"假说",process:"流程",optimization:"优化"};
+const OUT={confirmed:"做了，结论成立",refuted:"做了，结论不成立",abandoned:"没做 / 放弃了",unknown:"还没做，待定"};
+let OMODAL=null;
 const FIELDS=[["why_me","为什么和你有关"],["hypothesis","假说"],["minimal_check","最小验证"],["expected_observable","预期判据"],["falsifier","推翻条件"],["magnitude","量级"]];
 const CLS={adopt:"a",start_now:"a",reject:"r"};
 let HIDDEN=[],ASKS={seen:null,shown:{}};   // v1.5.3: 页面上隐藏的按钮（接口照常接受）；追问细节的状态
@@ -230,7 +233,7 @@ async function showHistory(){
 function drawHistList(){
   mode="histlist";editing=false;$("#pos").textContent="历史";$("#pg").style.width="100%";
   $("#stage").innerHTML=`<div class="card done"><h2>已评价 ${hist.list.length} / ${total}</h2><p class="meta">点任意一条查看详情：可以翻面、翻页、改写；分类不在这里改。</p>
-    <div class="list">${hist.list.map((c,i)=>`<div class="row" data-i="${i}"><span><span class="lt">${esc(fmt(c.verdict_ts))}</span>${esc(view(c).title)}</span><b>${esc(actLabel(c))}</b></div>`).join("")}</div>
+    <div class="list">${hist.list.map((c,i)=>`<div class="row" data-i="${i}"><span><span class="lt">${esc(fmt(c.verdict_ts))}</span>${esc(view(c).title)}${c.outcome?`<span class="lt"> · 结果：${esc(OUT[c.outcome.outcome]||c.outcome.outcome)}</span>`:""}</span><b>${esc(actLabel(c))}</b></div>`).join("")}</div>
     <p style="margin-top:16px"><button class="btn" id="bk">返回评价</button></p></div>`;
   document.querySelectorAll(".list .row").forEach(r=>r.onclick=()=>{hist.i=+r.dataset.i;renderHist()});
   $("#bk").onclick=load;
@@ -242,14 +245,47 @@ function renderHist(){
   $("#pos").textContent=`历史 ${hist.i+1} / ${hist.list.length}`;$("#pg").style.width=((hist.i+1)/hist.list.length*100)+"%";
   $("#stage").innerHTML=cardHTML(raw)+`
   <div class="hverd">你的评价：<b>${esc(actLabel(raw))}</b> · ${esc(fmt(raw.verdict_ts))}${raw.verdict_reason?" · 理由："+esc(raw.verdict_reason):""}</div>
+  <div class="hverd">结果回填：${raw.outcome?`<b>${esc(OUT[raw.outcome.outcome]||raw.outcome.outcome)}</b> · ${esc(raw.outcome.conclusion||"—")}`:"<b>未回填</b>"}</div>
   <div class="inputs"><input id="rs" placeholder="改写理由（可选）"></div>
-  <div class="hnav"><button class="btn" id="hp">← 上一张</button><button class="btn" id="hl">返回列表 Esc</button><button class="btn" id="he">改写 E</button><button class="btn" id="hn">下一张 →</button></div>
+  <div class="hnav"><button class="btn" id="hp">← 上一张</button><button class="btn" id="hl">返回列表 Esc</button><button class="btn" id="he">改写 E</button><button class="btn" id="oc">回填结果</button><button class="btn" id="hn">下一张 →</button></div>
   <div class="keys">空格 翻面 · E 改写 · ←/→ 翻页 · Esc 返回列表</div>`;
   bindCard();
   $("#hp").onclick=()=>histMove(-1);$("#hn").onclick=()=>histMove(1);$("#hl").onclick=drawHistList;$("#he").onclick=startEdit;
+  $("#oc").onclick=()=>openOutcome(raw);
   $("#hp").disabled=hist.i===0;$("#hn").disabled=hist.i>=hist.list.length-1;
 }
 function histMove(d){if(editing)return;const n=hist.i+d;if(n<0||n>=hist.list.length)return toast(d<0?"已经是第一张":"已经是最后一张");hist.i=n;renderHist()}
+
+// ---------------------------------------------------------------- B1 采纳后结果回填（独立弹窗，不参与评价与权重）
+function openOutcome(raw){
+  OMODAL={card_id:raw.id,title:view(raw).title,data:raw.outcome||null};
+  drawOutcome();$("#omodal").classList.add("on");
+  $("#omodal").onkeydown=e=>{e.stopPropagation();
+    if(e.key==="Escape"){e.preventDefault();closeOutcome()}
+    else if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();submitOutcome()}};
+  $("#osel").focus();
+}
+function drawOutcome(){
+  const d=OMODAL.data||{};
+  const opts=Object.entries(OUT).map(([k,v])=>`<option value="${k}"${d.outcome===k?" selected":""}>${esc(v)}</option>`).join("");
+  $("#omodal").innerHTML=`<div class="mbox">
+    <div class="tags"><b>结果回填</b><span>记录真实结果，不影响评价与权重</span></div>
+    <h3>${esc(OMODAL.title)}</h3>
+    <label>这条建议最后怎么样了</label><select id="osel">${opts}</select>
+    <label>结论（自由填写）</label><textarea id="ocon" rows="3" placeholder="例如：按最小验证跑了两组，结论成立">${esc(d.conclusion||"")}</textarea>
+    <label>实测结果 / 数字（可选）</label><textarea id="omea" rows="2" placeholder="例如：A=0.82，B=0.79">${esc(d.measured||"")}</textarea>
+    <div class="hnav"><button class="btn" id="ocx">取消 Esc</button><button class="btn pri" id="ogo">保存 Ctrl+Enter</button></div></div>`;
+  $("#ocx").onclick=closeOutcome;$("#ogo").onclick=submitOutcome;
+}
+async function submitOutcome(){
+  if(!OMODAL)return;
+  const body={card_id:OMODAL.card_id,outcome:$("#osel").value,conclusion:$("#ocon").value,measured:$("#omea").value};
+  try{const r=await api("/api/outcome",body);
+    const c=hist.list.find(x=>x.id===OMODAL.card_id);if(c)c.outcome=r.entry;
+    closeOutcome();toast("已记录结果："+OUT[body.outcome],4000);if(mode==="hist")renderHist()}
+  catch(e){toast("没能保存："+e.message,5000)}
+}
+function closeOutcome(){$("#omodal").classList.remove("on");$("#omodal").innerHTML="";OMODAL=null}
 
 // ---------------------------------------------------------------- v1.5.1 立刻动手：动手单 + 回执
 const BF=[["scene","场景","研究对象 + 子领域"],["method","方法","建立什么模型 / 用什么手段求解"],["output","产出","可量化的指标或可观测现象"],["baseline","对照","基线是什么"],["criterion","判据","产出与基线满足什么关系才算成立"]];

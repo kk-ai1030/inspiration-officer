@@ -273,6 +273,7 @@ SUITES = [
     ("CARD1 删卡复活 / 超配额 / finalize 循环 C1–C10（v1.5.7）", ["tests/v157_regression_test.py"], "V157 OK"),
     ("论文卡回到 v1.4.6 写法 E1–E10（v1.5.9）", ["tests/v159_regression_test.py"], "V159 OK"),
     ("评价页浏览器 U0–U9（v1.5.1，无 playwright 时跳过）", ["tests/ui_e2e_test.py"], None),
+    ("采纳后结果回填 B1", ["tests/b1_outcome_test.py"], "B1 OK"),
 ]
 
 

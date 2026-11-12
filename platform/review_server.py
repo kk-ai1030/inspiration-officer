@@ -52,6 +52,7 @@ def _load(rel: str, name: str):
 
 
 VERDICT = _load("insp-feedback/scripts/record_verdict.py", "verdict_rs")
+OUTCOME = _load("insp-feedback/scripts/record_outcome.py", "outcome_rs")
 
 
 def now_iso() -> str:
@@ -108,6 +109,7 @@ def load_cards(state_dir: Path, scope: str = "pending") -> dict:
     rows = VERDICT.read_verdicts(state_dir)
     stacks = VERDICT.verdict_stacks(rows)
     judged = VERDICT.judged_ids(state_dir)
+    outcomes = OUTCOME.latest_by_card(state_dir)
     out = []
     for f in sorted((state_dir / "cards").glob("*/cards.json")):
         doc = json.loads(f.read_text(encoding="utf-8"))
@@ -119,6 +121,7 @@ def load_cards(state_dir: Path, scope: str = "pending") -> dict:
             if isinstance(item.get("_edited"), dict) and "title" in item["_edited"]:
                 item["_edited"] = {**item["_edited"], "title": strip_canary(item["_edited"]["title"])}
             item["date"] = doc.get("date") or f.parent.name
+            item["outcome"] = outcomes.get(c.get("id"))
             st = stacks.get(c.get("id")) or []
             item["latest_action"] = st[-1]["action"] if st else None
             item["asked"] = any(v.get("action") == "ask_detail" for v in st)
@@ -487,6 +490,12 @@ def make_handler(app: App):
                                             "hidden": hidden_actions(app)})
             if path == "/api/receiver/status":
                 return self._send(200, receiver_status(app))
+            if path == "/api/outcome":
+                cid = (q.get("card_id") or [""])[0]
+                if (q.get("scope") or [""])[0] == "all":
+                    return self._send(200, {"outcomes": OUTCOME.read_outcomes(app.state_dir),
+                                            "summary": OUTCOME.summarize(app.state_dir)})
+                return self._send(200, {"outcome": OUTCOME.latest_by_card(app.state_dir).get(cid)})
             try:
                 if path == "/api/actions":
                     return self._send(200, jobs_view(app))
@@ -530,6 +539,12 @@ def make_handler(app: App):
                 body = json.loads(self.rfile.read(min(n, 1_000_000)).decode("utf-8") or "{}")
                 cid = str(body.get("card_id", ""))
                 extra: dict = {}
+                if path == "/api/outcome":   # B1: 结果回填不是评价，不写 verdicts.jsonl、不调权重
+                    with app.lock:
+                        entry = OUTCOME.record(app.state_dir, cid, str(body.get("outcome") or ""),
+                                               str(body.get("conclusion") or ""), str(body.get("measured") or ""),
+                                               via="card_ui")
+                    return self._send(200, {"ok": True, "entry": entry})
                 with app.lock:
                     if path == "/api/verdict":
                         action = body.get("action")

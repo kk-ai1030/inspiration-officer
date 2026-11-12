@@ -215,9 +215,30 @@ def review(state_dir: Path, today: date, memory: list[dict] | None, config: Path
     L += ["", "## 7. 三个月回访（验证“品味”而不是“偏好”）", ""]
     L += [f"- {v['card_id']}（{v['ts'][:10]} 采纳）：后来真的用上了吗？" for v in follow] or ["- 本周没有到期的回访。"]
     L += ["", f"## 8. 复活机制", "", f"- 当前计数 {state.get('revival', {}).get('counter', 0)}，每 {state.get('revival', {}).get('every', 20)} 次放行 1 次。"]
+    # B1: 采纳后结果回填。与 verdict 完全隔离：只读 outcomes.jsonl 做聚合，不进第 1–3 节的 p̂ / 权重。
+    # 这里不 import record_outcome：平台只挂载实际加载的技能，review 技能必须自包含。
+    outcome_latest = {}
+    for o in load_jsonl(state_dir / "outcomes.jsonl"):
+        if o.get("card_id"):
+            outcome_latest[o["card_id"]] = o
+    oc = {k: 0 for k in ("confirmed", "refuted", "abandoned", "unknown")}
+    for o in outcome_latest.values():
+        if o.get("outcome") in oc:
+            oc[o["outcome"]] += 1
+    done_outcomes = oc["confirmed"] + oc["refuted"]
+    outcome_summary = {"total": len(outcome_latest), "by_outcome": oc, "done": done_outcomes,
+                       "confirmed_rate": round(oc["confirmed"] / done_outcomes, 3) if done_outcomes else None}
+    L += ["", "## 9. 采纳后结果回填（B1）", "",
+          f"- 已回填 {outcome_summary['total']} 张：结论成立 {oc['confirmed']} · 结论不成立 {oc['refuted']} · "
+          f"没做 {oc['abandoned']} · 待定 {oc['unknown']}"]
+    L.append(f"- 做了的里面，结论成立率：{outcome_summary['confirmed_rate']:.0%}（{oc['confirmed']}/{done_outcomes}）"
+             if done_outcomes else "- 还没有做完的卡片，结论成立率暂不可算。")
+    L += ["", "实测摘录（最多 3 条，来自你自己填写的结论）：", ""]
+    excerpts = [o for o in outcome_latest.values() if o.get("conclusion")][:3]
+    L += [f"- `{o['card_id']}`：{str(o['conclusion'])[:80]}" for o in excerpts] or ["- 暂无。"]
     proposals = {"week": tag, "review_id": review_id, "generated_for": today.isoformat(), "proposal": proposal,
                  "type_stats": stats, "feature_stats": feature_stats, "adopted_week_ids": sorted(adopted_week),
-                 "memory_audit_ids": [m.get("id") for m in mem_audit]}
+                 "memory_audit_ids": [m.get("id") for m in mem_audit], "outcome_summary": outcome_summary}
     return "\n".join(L) + "\n", proposals
 
 
