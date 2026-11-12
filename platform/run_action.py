@@ -47,6 +47,7 @@ PKG = HERE.parent
 sys.path.insert(0, str(HERE))
 from sciencepal_client import ApiError, MultiAuth, SciencePal, collect_strings, extract_block, extract_blocks  # noqa: E402
 import action_brief as AB  # noqa: E402  v1.5.1 动手单
+import dryrun_template as DT  # noqa: E402  B7 最小验证 dry-run 模板与回执
 
 
 def file_reader(cfg: dict, sp: SciencePal):
@@ -793,6 +794,7 @@ def write_receipt(state_dir: Path, job: dict, result: dict | None, ev: dict, out
             verdict_gap = int((datetime.fromisoformat(job["created_at"]) - datetime.fromisoformat(job["verdict_ts"])).total_seconds())
     except (ValueError, TypeError):
         pass
+    dry = DT.receipt(job.get("card_snapshot") or {}, job_id=job["job_id"])  # B7: 独立字段，不进 checks / 结论
     rec = {"job_id": job["job_id"], "card_id": job["card_id"], "card_title": job["card_title"], "tier": job["tier"],
            "tier_label": job["tier_label"], "tier_reasons": job["tier_reasons"], "phase": job["phase"],
            "status": job["status"], "conclusion": conclusion,
@@ -806,11 +808,11 @@ def write_receipt(state_dir: Path, job: dict, result: dict | None, ev: dict, out
            "claims": {k: (result or {}).get(k) for k in ("summary", "steps", "minimal_check_result", "brief_result", "plan", "next_step")},
            "brief": job.get("brief"), "local_files": job.get("local_files"),
            "checks": checks, "all_checks_ok": all(c["ok"] for c in checks), "error": job.get("error"),
-           "ack": job.get("ack"), "written_at": now_iso()}
+           "dry_run": dry, "ack": job.get("ack"), "written_at": now_iso()}
     write_json(jd / "receipt.json", rec)
     (jd / "receipt.md").write_text(render_receipt(rec), encoding="utf-8")
     job["receipt"] = {"conclusion": conclusion, "all_checks_ok": rec["all_checks_ok"], "summary": (result or {}).get("summary"),
-                      "brief_result": (result or {}).get("brief_result"),
+                      "brief_result": (result or {}).get("brief_result"), "dry_run": dry,
                       "outputs": [{"path": o.get("path"), "local": o.get("local"), "verified": o.get("verified")} for o in outs][:20]}
     return rec
 
@@ -886,6 +888,8 @@ def render_receipt(r: dict) -> str:
           f"`python platform/run_action.py --config <config> --ack {r['job_id']} --result accept|rerun|discard --note \"...\"`"]
     if r.get("ack"):
         L += ["", f"已确认：{ACK_RESULTS.get(r['ack']['result'])}（{r['ack']['ts']}）{r['ack'].get('note') or ''}"]
+    if r.get("dry_run"):   # B7: 独立段落，不动上面的执行层证据与解释层
+        L += ["", "## 本地 dry-run（未执行真实实验）", "", DT.render_receipt_md(r["dry_run"])]
     return "\n".join(L) + "\n"
 
 

@@ -53,6 +53,7 @@ def _load(rel: str, name: str):
 
 VERDICT = _load("insp-feedback/scripts/record_verdict.py", "verdict_rs")
 OUTCOME = _load("insp-feedback/scripts/record_outcome.py", "outcome_rs")
+DRYRUN = _load("platform/dryrun_template.py", "dryrun_rs")
 
 
 def now_iso() -> str:
@@ -502,6 +503,15 @@ def make_handler(app: App):
                 if path == "/api/action/brief":
                     cid = (q.get("card_id") or [""])[0]
                     return self._send(200, {"brief": _ra(app).make_brief(app.state_dir, cid)})
+                if path in ("/api/action/script", "/api/action/dryrun"):   # B7: 最小验证脚本 / 本地 dry-run 回执
+                    cid = (q.get("card_id") or [""])[0]
+                    card = next((c for c in load_cards(app.state_dir, "all")["cards"] if c.get("id") == cid), None)
+                    if card is None:
+                        return self._send(404, {"error": f"找不到卡片 {cid}"})
+                    if path == "/api/action/script":
+                        return self._send(200, DRYRUN.build(card))
+                    d = DRYRUN.receipt(card)
+                    return self._send(200, {"dry_run": d, "md": DRYRUN.render_receipt_md(d)})
             except (LookupError, ValueError) as exc:
                 return self._send(400, {"error": str(exc)})
             except Exception as exc:  # noqa: BLE001

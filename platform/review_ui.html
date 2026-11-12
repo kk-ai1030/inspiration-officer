@@ -247,11 +247,11 @@ function renderHist(){
   <div class="hverd">你的评价：<b>${esc(actLabel(raw))}</b> · ${esc(fmt(raw.verdict_ts))}${raw.verdict_reason?" · 理由："+esc(raw.verdict_reason):""}</div>
   <div class="hverd">结果回填：${raw.outcome?`<b>${esc(OUT[raw.outcome.outcome]||raw.outcome.outcome)}</b> · ${esc(raw.outcome.conclusion||"—")}`:"<b>未回填</b>"}</div>
   <div class="inputs"><input id="rs" placeholder="改写理由（可选）"></div>
-  <div class="hnav"><button class="btn" id="hp">← 上一张</button><button class="btn" id="hl">返回列表 Esc</button><button class="btn" id="he">改写 E</button><button class="btn" id="oc">回填结果</button><button class="btn" id="hn">下一张 →</button></div>
+  <div class="hnav"><button class="btn" id="hp">← 上一张</button><button class="btn" id="hl">返回列表 Esc</button><button class="btn" id="he">改写 E</button><button class="btn" id="oc">回填结果</button><button class="btn" id="ds">验证脚本</button><button class="btn" id="hn">下一张 →</button></div>
   <div class="keys">空格 翻面 · E 改写 · ←/→ 翻页 · Esc 返回列表</div>`;
   bindCard();
   $("#hp").onclick=()=>histMove(-1);$("#hn").onclick=()=>histMove(1);$("#hl").onclick=drawHistList;$("#he").onclick=startEdit;
-  $("#oc").onclick=()=>openOutcome(raw);
+  $("#oc").onclick=()=>openOutcome(raw);$("#ds").onclick=()=>downloadScript(raw.id);
   $("#hp").disabled=hist.i===0;$("#hn").disabled=hist.i>=hist.list.length-1;
 }
 function histMove(d){if(editing)return;const n=hist.i+d;if(n<0||n>=hist.list.length)return toast(d<0?"已经是第一张":"已经是最后一张");hist.i=n;renderHist()}
@@ -286,6 +286,16 @@ async function submitOutcome(){
   catch(e){toast("没能保存："+e.message,5000)}
 }
 function closeOutcome(){$("#omodal").classList.remove("on");$("#omodal").innerHTML="";OMODAL=null}
+
+// ---------------------------------------------------------------- B7 最小验证脚本（本地 dry-run 模板）
+async function downloadScript(cid){
+  try{const r=await api("/api/action/script?card_id="+encodeURIComponent(cid));
+    const url=URL.createObjectURL(new Blob([r.content],{type:"text/x-python"}));
+    const a=document.createElement("a");a.href=url;a.download=r.filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast("已下载最小验证脚本（dry-run 模板，不会执行）")}
+  catch(e){toast("没能生成脚本："+e.message,5000)}
+}
 
 // ---------------------------------------------------------------- v1.5.1 立刻动手：动手单 + 回执
 const BF=[["scene","场景","研究对象 + 子领域"],["method","方法","建立什么模型 / 用什么手段求解"],["output","产出","可量化的指标或可观测现象"],["baseline","对照","基线是什么"],["criterion","判据","产出与基线满足什么关系才算成立"]];
@@ -355,6 +365,7 @@ async function showReceipts(focus){
       ${ck.length?`<div class="chk">${ck.map(x=>`<span class="${x.ok?"":"no"}">${x.ok?"通过":"未通过"}：${esc(x.name)}</span>`).join(" · ")}</div>`:""}
       ${j.brief?`<details><summary>动手单（${esc(ORIGIN[j.brief.origin]||j.brief.origin||"")}）</summary>${briefList(j.brief)}</details>`:""}
       ${j.has_receipt?`<div class="jm">完整回执：<a href="#" data-rv="${esc(j.job_id)}" data-what="file" title="用本机默认程序打开 receipt.md">receipt.md</a> · <a href="#" data-rv="${esc(j.job_id)}" data-what="folder" title="在文件管理器里打开这个任务的文件夹">打开所在文件夹</a></div>`:""}
+      ${r.dry_run?`<div class="jm">最小验证 dry-run：未执行真实实验 · 结论无定论 · <a href="#" data-ds="${esc(j.card_id)}">下载脚本模板</a></div>`:""}
       <div class="jb">${j.awaiting==="approve"?`<button class="btn pri" data-ap="${esc(j.job_id)}">批准执行</button>`:""}
         ${j.awaiting==="ack"?["accept","rerun","discard"].map(x=>`<button class="btn${x==="accept"?" pri":""}" data-ack="${x}" data-j="${esc(j.job_id)}">${{accept:"结果可用",rerun:"需要重跑",discard:"结果作废"}[x]}</button>`).join(""):""}</div></div>`}).join("");
   $("#stage").innerHTML=`<div class="card done" style="text-align:left"><h2 style="text-align:center">立刻动手 · 任务回执</h2>
@@ -366,6 +377,7 @@ async function showReceipts(focus){
   document.querySelectorAll("[data-rv]").forEach(a=>a.onclick=async ev=>{ev.preventDefault();
     try{const r=await api("/api/action/reveal",{job_id:a.dataset.rv,what:a.dataset.what});toast(r.opened==="file"?"已在本机打开回执":"已在本机打开所在文件夹")}catch(e){toast("没能打开："+e.message)}});
   if(jump){const el=document.getElementById("job-"+focus)||document.getElementById("ask-"+focus);if(el)el.scrollIntoView({block:"center"});else toast("没找到这条任务（可能已被清理）")}
+  document.querySelectorAll("[data-ds]").forEach(a=>a.onclick=ev=>{ev.preventDefault();downloadScript(a.dataset.ds)});
   document.querySelectorAll("[data-brief]").forEach(b=>b.onclick=async()=>{try{const r=await api("/api/action/brief?card_id="+encodeURIComponent(b.dataset.brief));openBrief(b.dataset.brief,b.dataset.title,r.brief,"")}catch(e){toast(e.message)}});
   document.querySelectorAll("[data-ap]").forEach(b=>b.onclick=async()=>{if(!confirm("批准按方案执行？"))return;try{await api("/api/action/approve",{job_id:b.dataset.ap});toast("已批准，开始执行");showReceipts()}catch(e){toast(e.message)}});
   document.querySelectorAll("[data-askretry]").forEach(b=>b.onclick=async()=>{b.disabled=true;

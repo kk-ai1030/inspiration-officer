@@ -276,6 +276,7 @@ SUITES = [
     ("采纳后结果回填 B1", ["tests/b1_outcome_test.py"], "B1 OK"),
     ("多来源 L0 B2", ["tests/b2_multi_source_test.py"], "B2 OK"),
     ("网页周报脱敏摘要 B4", ["tests/b4_weekly_web_test.py"], "B4 OK"),
+    ("最小验证 dry-run B7", ["tests/b7_dryrun_test.py"], "B7 OK"),
 ]
 
 
