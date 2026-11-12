@@ -47,6 +47,8 @@ from pathlib import Path
 RUNNER_VERSION = "insp-run/1.5.9"
 BUNDLE_VERSION = "insp-bundle/1.0"
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import extra_sources as XS  # noqa: E402 - B2 可插拔候选来源（默认关闭，随 nightly 技能一起打包）
 SKILL = HERE.parent
 VENDOR = HERE / "vendor"
 TEMPLATE = SKILL / "assets" / "state_template"
@@ -361,11 +363,15 @@ def cmd_prepare(a) -> int:
             meta["fetch_mode"] = fetch_mode = tri["fetch_mode"]
     else:
         st = json.loads((state_dir / "state.json").read_text(encoding="utf-8"))
+        extra_raw = getattr(a, "extra_raw", None)   # B2: 老调用方没有这个参数时保持关闭
         if a.observed_only:  # v1.5: only the local observed channel this time (no arXiv request at all)
             raw = []
             meta["notes"].append("--observed-only：本次只处理本地观察通道（observed.jsonl），没有抓 arXiv。")
         elif a.raw:
             raw = json.loads(a.raw.read_text(encoding="utf-8"))
+        elif XS.extra_only(st, fixture=extra_raw):   # B2: 只走额外来源，跳过 arXiv 可达性检查
+            raw = []
+            meta["notes"].append("本轮只走额外候选来源，没有抓 arXiv。")
         else:
             ok, why = arxiv_reachable()
             if not ok:
@@ -384,6 +390,13 @@ def cmd_prepare(a) -> int:
                 write_bundle(out, b)
                 print(f"FETCH_BLOCKED: {exc}")
                 return 4
+        # B2: 额外来源与 arXiv 条目一起进同一个 triage 漏斗；默认关闭时 raw 逐字不变（E10）。
+        src_notes: list[str] = []
+        extra = XS.collect(st, fixture=extra_raw, base_dirs=(refs, home, Path.cwd()), notes=src_notes)
+        if extra:
+            raw = list(raw) + extra
+            meta["notes"].append(f"额外来源：{len(extra)} 条并入同一漏斗（去重 / 打分 / 配额规则不变）。")
+        meta["notes"].extend(src_notes)
         (out / "raw_items.json").write_text(jdump(raw), encoding="utf-8")
         code, tri = triage.run_triage(state_dir, raw)
         if code == 3:
@@ -407,7 +420,9 @@ def cmd_prepare(a) -> int:
                                 "deferred": rep.get("deferred", []), "max_candidates": cfg["max_candidates"]}
     tri["fetch_mode"] = fetch_mode
     for c in tri.get("shortlisted", []):
-        c["links"] = ft.arxiv_links(c.get("id", ""), c.get("fulltext"))
+        # B2: 非 arXiv 来源不能拼出假摘要页链接；默认关闭时对 arXiv 条目行为逐字不变
+        c["links"] = (ft.arxiv_links(c.get("id", ""), c.get("fulltext")) if ft.is_arxiv_ref(c.get("id", ""))
+                      else {"url": c.get("url") or "", "read_mode": "abstract"})
     obs = tri.get("observed_shortlist") or []
     for c in obs:  # one short evidence file per observed candidate: the agent reads it and copies the quote from it
         (out / f"{c['id']}.md").write_text(observed_md(c), encoding="utf-8")
@@ -800,6 +815,8 @@ def main() -> int:
     p.add_argument("--exclude", help="逗号分隔的 arXiv ID：已经推送过、不要再出卡（来自记忆里的“[灵感状态]”条目）")
     p.add_argument("--run-id")
     p.add_argument("--raw", type=Path, help="离线测试：用本地 raw_items.json 代替抓取")
+    p.add_argument("--extra-raw", type=Path,
+                   help="B2：从本地 JSON 读额外候选来源（隐含只走额外来源、不抓 arXiv；离线测试与本地兜底用）")
     p.add_argument("--observed-only", action="store_true",
                    help="v1.5：只处理本地观察通道（observed.jsonl），不抓 arXiv（测 A 类卡、或 arXiv 不通时用）")
     p.add_argument("--fulltext-max", type=int, default=None,
