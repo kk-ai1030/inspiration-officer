@@ -17,6 +17,7 @@ tools/list / tools/call / resources/list / prompts/list，兼容 2024-11-05 及�
 Usage:
     python mcp/inspiration_mcp.py --state-dir inspiration
     python mcp/inspiration_mcp.py --state-dir inspiration --read-only
+    python mcp/inspiration_mcp.py --state-dir inspiration --usage   # 使用画像，默认关闭
     python mcp/inspiration_mcp.py --self-test
 """
 
@@ -28,6 +29,7 @@ import json
 import os
 import re
 import sys
+import time
 import traceback
 from datetime import date
 from pathlib import Path
@@ -57,15 +59,18 @@ VS = _load("platform/verdict_summary.py", "mcp_vsummary")
 DT = _load("platform/dryrun_template.py", "mcp_dryrun")
 WR = _load("insp-review/scripts/weekly_review.py", "mcp_weekly")
 XS = _load("insp-nightly/scripts/extra_sources.py", "mcp_extra")
+UL = _load("mcp/usage_log.py", "mcp_usage_log")
+FW = _load("mcp/flywheel.py", "mcp_flywheel")
 
-WRITE_TOOLS = {"insp_record_verdict", "insp_record_outcome"}
+WRITE_TOOLS = {"insp_record_verdict", "insp_record_outcome", "insp_forget"}
 
 
 class Ctx:
-    def __init__(self, state_dir: Path, config: Path | None, read_only: bool):
+    def __init__(self, state_dir: Path, config: Path | None, read_only: bool, usage_enabled: bool = False):
         self.state_dir = state_dir
         self.config = config
         self.read_only = read_only
+        self.usage_enabled = usage_enabled
 
 
 def log(msg: str) -> None:
@@ -110,7 +115,9 @@ def t_status(args: dict, ctx: Ctx):
     state = json.loads((sd / "state.json").read_text(encoding="utf-8")) if (sd / "state.json").is_file() else {}
     cards = RS.load_cards(sd, "all")
     weights = json.loads((sd / "taste/weights.json").read_text(encoding="utf-8")) if (sd / "taste/weights.json").is_file() else {}
+    last = UL.summary(sd)["last"] if ctx.usage_enabled else None
     return {"ok": True, "state_dir": sd.name, "state_json": (sd / "state.json").is_file(),
+            "usage_enabled": ctx.usage_enabled, "last_tool_call": scrub(last) if last else None,
             "cards_total": cards["total"], "pending": cards["pending"],
             "verdicts": len(VERDICT.read_verdicts(sd)), "outcomes": len(OUTCOME.read_outcomes(sd)),
             "weights_version": weights.get("version"), "read_only": ctx.read_only,
@@ -213,10 +220,30 @@ def t_sources_plan(args: dict, ctx: Ctx):
 
 
 def t_help(args: dict, ctx: Ctx):
-    return {"typical_flow": ["insp_status", "insp_list_cards", "insp_get_card", "insp_record_verdict",
-                             "insp_record_outcome", "insp_weekly_report", "insp_dryrun_script"],
-            "writes": sorted(WRITE_TOOLS), "read_only": ctx.read_only,
-            "note": "所有工具都只访问 --state-dir；卡片生成仍由 SciencePal 云端智能体负责，MCP 不联网。"}
+    d = {"typical_flow": ["insp_status", "insp_list_cards", "insp_get_card", "insp_record_verdict",
+                          "insp_record_outcome", "insp_weekly_report", "insp_dryrun_script"],
+         "writes": sorted(WRITE_TOOLS), "read_only": ctx.read_only, "usage_enabled": ctx.usage_enabled,
+         "note": "所有工具都只访问 --state-dir；卡片生成仍由 SciencePal 云端智能体负责，MCP 不联网。"}
+    if ctx.usage_enabled:
+        d["your_pattern"] = UL.guidance(ctx.state_dir)
+        d["note"] += " 使用画像已开启：insp_usage 看统计，insp_forget 一键清除。"
+    else:
+        d["note"] += " 使用画像默认关闭，加 --usage 或 INSP_MCP_USAGE=1 可开启。"
+    return d
+
+
+def t_flywheel(args: dict, ctx: Ctx):
+    return FW.build(ctx.state_dir, ctx.config)
+
+
+def t_usage(args: dict, ctx: Ctx):
+    return {"enabled": ctx.usage_enabled, **UL.summary(ctx.state_dir),
+            "note": "使用画像只记操作类别，不记 reason / conclusion / 卡片标题等原文；默认关闭，insp_forget 可清除。"}
+
+
+def t_forget(args: dict, ctx: Ctx):
+    return {"forgotten": UL.forget(ctx.state_dir),
+            "note": "已清除本机 MCP 使用画像；评价、卡片、权重与结果回填都不受影响。"}
 
 
 HANDLERS = {
@@ -226,6 +253,7 @@ HANDLERS = {
     "insp_weekly_report": t_weekly_report, "insp_verdict_summary": t_verdict_summary,
     "insp_dryrun_script": t_dryrun_script, "insp_dryrun_receipt": t_dryrun_receipt,
     "insp_list_jobs": t_list_jobs, "insp_sources_plan": t_sources_plan, "insp_help": t_help,
+    "insp_flywheel": t_flywheel, "insp_usage": t_usage, "insp_forget": t_forget,
 }
 
 
@@ -261,7 +289,11 @@ def tool_defs(ctx: Ctx) -> list[dict]:
          _schema({"card_id": CID}, ["card_id"])),
         ("insp_list_jobs", "只读。列出「立刻动手」任务与回执概要，含独立的 dry_run 字段。", _schema({"limit": LIM})),
         ("insp_sources_plan", "只读。查看 B2 额外候选来源的开关配置（不联网、不抓取）。", _schema({})),
-        ("insp_help", "只读。返回推荐调用顺序与读写工具清单。", _schema({})),
+        ("insp_help", "只读。返回推荐调用顺序、读写工具清单，以及开启使用画像后的个性化引导。", _schema({})),
+        ("insp_flywheel", "只读。飞轮观测台：采纳率趋势、p̂、权重版本与提议、结果成立率、隐式信号，"
+                          "并诚实列出目前还没回流的信号。不改权重、不写文件。", _schema({})),
+        ("insp_usage", "只读。查看 MCP 使用画像统计（默认关闭时不产生任何日志）。", _schema({})),
+        ("insp_forget", "**写本地文件**。一键清除 MCP 使用画像；不影响评价 / 卡片 / 权重 / 结果回填。", _schema({})),
     ]
     return [{"name": n, "description": d, "inputSchema": s} for n, d, s in defs
             if not (ctx.read_only and n in WRITE_TOOLS)]
@@ -282,13 +314,20 @@ def call_tool(name: str, arguments: dict, ctx: Ctx) -> dict:
     fn = HANDLERS.get(name)
     if fn is None:
         return {"content": [{"type": "text", "text": f"未知工具 {name}，用 tools/list 查看可用工具"}], "isError": True}
+    args = arguments or {}
+    t0 = time.perf_counter()
+    ok = False
     try:
-        result = fn(arguments or {}, ctx)
+        result = fn(args, ctx)
         text = result if isinstance(result, str) else json.dumps(scrub(result), ensure_ascii=False, indent=2)
+        ok = True
         return {"content": [{"type": "text", "text": text}], "isError": False}
     except Exception as exc:  # noqa: BLE001 - 工具错误按 MCP 约定走 isError，不打断会话
         log(f"TOOL ERROR {name}: {type(exc).__name__}: {exc}")
         return {"content": [{"type": "text", "text": f"{type(exc).__name__}: {exc}"}], "isError": True}
+    finally:
+        if ctx.usage_enabled:   # 埋点失败静默跳过；观测类工具在 usage_log 内部不记
+            UL.append(ctx.state_dir, name, args, ok, (time.perf_counter() - t0) * 1000)
 
 
 def handle(msg: dict, ctx: Ctx) -> dict | None:
@@ -325,7 +364,8 @@ def send(obj: dict) -> None:
 
 
 def serve(ctx: Ctx) -> int:
-    log(f"inspiration-officer MCP {VERSION} ready · state_dir={ctx.state_dir.name} · read_only={ctx.read_only}")
+    log(f"inspiration-officer MCP {VERSION} ready · state_dir={ctx.state_dir.name} · "
+        f"read_only={ctx.read_only} · usage={ctx.usage_enabled}")
     for raw in sys.stdin.buffer:
         line = raw.decode("utf-8", errors="replace").strip()
         if not line:
@@ -386,6 +426,21 @@ def self_test() -> int:
         check("脱敏摘要可读", '"schema"' in call_tool("insp_verdict_summary", {}, ctx)["content"][0]["text"])
         script = call_tool("insp_dryrun_script", {"card_id": "ins_mcp_1"}, ctx)["content"][0]["text"]
         check("dry-run 脚本安全", "DRY-RUN" in script and all(x not in script for x in DT.DANGEROUS))
+        fw = call_tool("insp_flywheel", {}, ctx)
+        check("飞轮观测台只读可用", fw["isError"] is False and
+              "insp-flywheel/1.0" in fw["content"][0]["text"] and
+              "not_consumed" in fw["content"][0]["text"], fw["content"][0]["text"][:200])
+        check("使用画像默认关闭", '"enabled": false' in call_tool("insp_usage", {}, ctx)["content"][0]["text"]
+              and not UL.path_of(sd).exists())
+        uctx = Ctx(sd, None, False, True)
+        call_tool("insp_record_verdict", {"card_id": "ins_mcp_1", "action": "adopt", "reason": "绝密理由"}, uctx)
+        usage_text = UL.path_of(sd).read_text(encoding="utf-8")
+        check("埋点只记类别不记原文", "绝密理由" not in usage_text and "reason" not in usage_text and
+              '"action": "adopt"' in usage_text, usage_text[:200])
+        check("个性化引导", "your_pattern" in call_tool("insp_help", {}, uctx)["content"][0]["text"])
+        check("状态带上次操作", '"last_tool_call"' in call_tool("insp_status", {}, uctx)["content"][0]["text"])
+        check("一键清除画像", '"removed": true' in call_tool("insp_forget", {}, uctx)["content"][0]["text"]
+              and not UL.path_of(sd).exists())
         check("未知工具 isError", call_tool("nope", {}, ctx)["isError"] is True)
         check("未知方法 -32601", handle({"jsonrpc": "2.0", "id": 3, "method": "nope"}, ctx)["error"]["code"] == -32601)
         ro = Ctx(sd, None, True)
@@ -404,6 +459,8 @@ def main() -> int:
                     help="本机灵感状态目录（默认 ./inspiration，或环境变量 INSP_STATE_DIR）")
     ap.add_argument("--config", type=Path, help="可选的 config.json，用于周报 / 摘要的权重配置")
     ap.add_argument("--read-only", action="store_true", help="只暴露只读工具，屏蔽所有写入")
+    ap.add_argument("--usage", action="store_true",
+                    help="开启 MCP 使用画像（默认关闭；也可设 INSP_MCP_USAGE=1）。只记操作类别，不记用户原文")
     ap.add_argument("--self-test", action="store_true", help="离线跑一轮协议与工具自测后退出")
     a = ap.parse_args()
     if a.self_test:
@@ -411,7 +468,8 @@ def main() -> int:
     cfg = a.config
     if cfg is None and (ROOT / "config.json").is_file():
         cfg = ROOT / "config.json"
-    return serve(Ctx(a.state_dir.resolve(), cfg, a.read_only))
+    usage = a.usage or os.environ.get("INSP_MCP_USAGE") == "1"
+    return serve(Ctx(a.state_dir.resolve(), cfg, a.read_only, usage))
 
 
 if __name__ == "__main__":

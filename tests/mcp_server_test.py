@@ -94,7 +94,7 @@ def main() -> int:
         tools = t["result"]["tools"]
         names = {x["name"] for x in tools}
         check("MCP-1 notification 不产生响应", t["id"] == 2, str(t)[:200])
-        check("MCP-1 14 个工具且 schema 合法", len(names) == 14 and
+        check("MCP-1 17 个工具且 schema 合法", len(names) == 17 and
               all(x["inputSchema"]["type"] == "object" and x["description"] for x in tools), str(sorted(names)))
         check("MCP-1 ping / 空资源与提示", c.rpc("ping", {}, 3)["result"] == {} and
               c.rpc("resources/list", {}, 4)["result"] == {"resources": []} and
@@ -134,6 +134,18 @@ def main() -> int:
         _, text = c.tool("insp_help", {}, 22)
         check("MCP-2 help", "insp_status" in text)
 
+        print("== MCP-6 飞轮观测台")
+        r, text = c.tool("insp_flywheel", {}, 30)
+        fw = json.loads(text)
+        check("MCP-6 schema 与诚实标注", r["isError"] is False and
+              fw["schema"] == "insp-flywheel/1.0" and len(fw["flywheel"]["not_consumed"]) >= 3, text[:200])
+        check("MCP-6 聚合到刚才的写操作", fw["signals"]["verdicts"]["explicit"] >= 1 and
+              fw["signals"]["outcomes"]["total"] == 1 and fw["signals"]["weights"]["history_len"] == 0)
+        before = {p.name: p.stat().st_mtime_ns for p in sd.rglob("*") if p.is_file()}
+        c.tool("insp_flywheel", {}, 31)
+        after = {p.name: p.stat().st_mtime_ns for p in sd.rglob("*") if p.is_file()}
+        check("MCP-6 完全只读", before == after)
+
         print("== MCP-3 错误与隐私")
         r, text = c.tool("no_such_tool", {}, 23)
         check("MCP-3 未知工具 isError", r["isError"] is True)
@@ -152,7 +164,9 @@ def main() -> int:
         ro = Client(sd, ["--read-only"])
         ro.rpc("initialize", {"protocolVersion": "2024-11-05"}, 1)
         names = {x["name"] for x in ro.rpc("tools/list", {}, 2)["result"]["tools"]}
-        check("MCP-4 写工具被隐藏", not ({"insp_record_verdict", "insp_record_outcome"} & names), str(sorted(names)))
+        check("MCP-4 写工具被隐藏", not ({"insp_record_verdict", "insp_record_outcome", "insp_forget"} & names),
+              str(sorted(names)))
+        check("MCP-4 清除画像也被拒绝", ro.tool("insp_forget", {}, 6)[0]["isError"] is True)
         r, text = ro.rpc("tools/call", {"name": "insp_record_verdict",
                                         "arguments": {"card_id": "ins_mcp_1", "action": "adopt"}}, 3)["result"], ""
         check("MCP-4 写调用被拒绝", r["isError"] is True)
@@ -179,6 +193,30 @@ def main() -> int:
         r, text = d.tool("insp_weekly_report", {}, 5)
         check("MCP-5 演示数据能出周报", r["isError"] is False, text[:200])
         d.close()
+
+        print("== MCP-7 使用画像（默认关闭）")
+        log_file = sd / "mcp_usage.jsonl"
+        u0 = Client(sd)
+        u0.rpc("initialize", {"protocolVersion": "2024-11-05"}, 1)
+        r, text = u0.tool("insp_usage", {}, 40)
+        check("MCP-7 默认关闭且不写文件", json.loads(text)["enabled"] is False and not log_file.exists())
+        u0.close()
+
+        u = Client(sd, ["--usage"])
+        u.rpc("initialize", {"protocolVersion": "2024-11-05"}, 1)
+        u.tool("insp_record_verdict", {"card_id": "ins_mcp_1", "action": "adopt", "reason": "绝密原文"}, 41)
+        log_text = log_file.read_text(encoding="utf-8") if log_file.exists() else ""
+        check("MCP-7 只记类别不记原文", '"action": "adopt"' in log_text and "绝密原文" not in log_text
+              and "reason" not in log_text, log_text[:200])
+        r, text = u.tool("insp_help", {}, 42)
+        check("MCP-7 个性化引导", "your_pattern" in text)
+        r, text = u.tool("insp_status", {}, 43)
+        check("MCP-7 状态带上次操作", json.loads(text)["last_tool_call"] is not None)
+        r, text = u.tool("insp_usage", {}, 44)
+        check("MCP-7 统计", json.loads(text)["enabled"] is True and json.loads(text)["total"] >= 1)
+        r, text = u.tool("insp_forget", {}, 45)
+        check("MCP-7 一键清除", json.loads(text)["forgotten"]["removed"] is True and not log_file.exists())
+        u.close()
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print("MCP OK" if OK else "MCP TESTS FAILED")

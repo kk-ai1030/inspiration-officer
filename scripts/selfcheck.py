@@ -278,6 +278,8 @@ SUITES = [
     ("网页周报脱敏摘要 B4", ["tests/b4_weekly_web_test.py"], "B4 OK"),
     ("最小验证 dry-run B7", ["tests/b7_dryrun_test.py"], "B7 OK"),
     ("MCP stdio 服务器", ["tests/mcp_server_test.py"], "MCP OK"),
+    ("MCP 使用画像自测", ["mcp/usage_log.py", "--self-test"], "SELF-TEST OK: usage_log"),
+    ("飞轮观测台自测", ["mcp/flywheel.py", "--self-test"], "SELF-TEST OK: flywheel"),
 ]
 
 
@@ -298,7 +300,12 @@ def g1(a) -> int:
         except subprocess.TimeoutExpired as exc:
             out, code = f"超时（>{a.timeout}s）\n{exc.stdout or ''}", -1
         dt = time.time() - t0
-        fails = [l for l in out.splitlines() if l.startswith(("FAIL", "INVALID", "SELF-TEST FAIL", "Traceback"))]
+        lines = out.splitlines()
+        fails = [l for l in lines if l.startswith(("FAIL", "INVALID", "SELF-TEST FAIL"))]
+        # 有的套件会在后台线程里打印预期内的 traceback 但仍成功退出（例如 A9 起本地服务时端口被占）。
+        # 只有退出码非 0 时 Traceback 才是失败信号，避免把噪音误判成回归。
+        if code != 0:
+            fails += [l for l in lines if l.startswith("Traceback")]
         ok = code == 0 and not fails and (must is None or must in out)
         c(f"{name}（{dt:.0f}s）", ok, "; ".join(fails[:3]) or ("" if ok else out[-400:]))
         logs += [f"### {name}", "", f"命令：`python {' '.join(cmd)}` · 退出码 {code} · {dt:.1f}s", "", "```text",

@@ -1,4 +1,4 @@
-# inspiration-skills 1.5.9-test · 166 个文件 · 格式：sha256  大小  路径
+# inspiration-skills 1.5.9-test · 168 个文件 · 格式：sha256  大小  路径
 
 cc82cde5b1ee7c07187eba627e5de09f6ea43e7357327b10fb1b39f8950b2d48        11  VERSION
 2a2d1c0c6e14bd64b4b4b70ff1d3edc886a81135543c7d7d2d3034f51ab91437       595  demo_reset.bat
@@ -15,7 +15,7 @@ e88730dc303212d319746ebd3a35c729cd5fa11ccd0ab79ca2de197738262e16    339532  docs
 d1268c76d2829096d0f17f6fcb354a1c3293391c4ffa23033bd60b0b19f34387    226661  docs/images/verdict.png
 cf6ea480f5500d382cefe738ee48ce89d46d703b9cd9b2d2bebcad413de5e185      7270  docs/v1.5_测试验收节点.md
 ee8b51ae403013bbb04e97acfbfb64e77ac6367a520198ea8d21d3084785d036      8715  docs/weak-beta发布门槛与证据.md
-57985ba37614dcfbf68a674780d4fcb874c565496871ee9026562c84d9eeedc4     34821  docs/开发文档.md
+9c92a103c23188b5a3345254238cca9d8c75b787c2537f10f2934bd3e979b74d     36760  docs/开发文档.md
 881c3e52f23c56216512bcb06e07573a7309eb334d916362199a4086c95cffef       302  insp-card/agents/openai.yaml
 5d33eae8469f810d948d4a9143fac3ae33932f28bf8ef5e87e45eb518b8346af      2366  insp-card/assets/卡片模板/cards.json
 e941a40b4396302482488818a85bd22035b70e02e89fa3b33c4953de9b81d75e      2354  insp-card/references/四类灵感与配额.md
@@ -126,7 +126,7 @@ d585f8bfa20f01340db9efc3c29458e2c7f93d4da9ca045d137cff7b8b062343      2285  plat
 e11f6d766ff3da0476a9578a01060c34824b700a219e546c9c1dc5d9c3dc2e7c      2154  platform/windows/start_review_server.ps1
 92154be238371b11623d8f386ded87c5ba4d920cc58706a5c567876c982726c0      2671  platform/windows/toast.ps1
 60517e8318acbba7e7ea48e6bdf40acc37aff3c55b2a0e1c79750ce1395b551b      5033  scripts/build_release.py
-9964bd98f84abbfdbe2765a1cc8dfa45423e47a2a87bf634f24bb1901fa39915     54045  scripts/selfcheck.py
+10913fb53d8e0e09dd70c79e7108de1dde00f61de9271f09475312dcd1d79e7f     54574  scripts/selfcheck.py
 bcaff4aa9b47670700ea9dcb7797ea4b44bf23e2df483f1a1074d5b791b0da23      2363  scripts/sync_vendor.py
 a6b3a7fea2182c21af34ec8c9239866c3e0a04b411baf06b14bd8fb69b73774a      5402  tests/arxiv_check_test.py
 7c3d58425b19d36dfa4d15d4b26a8d75d88dc8f0ebb2700ae2219186b07b409c      7217  tests/b1_outcome_test.py
@@ -149,7 +149,7 @@ c88a8f7421a374af85abb7b26396c34b5f4bf1699f44d256043a1087cdb18d13      4468  test
 078e2c12caca128450169b3853b15ea43dd304faf6d4d33ed885333ef6828bae       462  tests/fixtures/seen_ids.json
 7781312a10abad6b31fa979aeffa0a54a70d2cd7afc2f00ee45ac1eb86d6e40f       174  tests/fixtures/verdict_block.txt
 4ceda5129114246a7b1c4eac34e92f069c0b674fdcb9399fa5291a3d3c3ce20e     13287  tests/learning_loop_sim.py
-23caa706f3a8d13c3cc26446fe0ec38a37c3a2d0a8e71a82017b8f0aa53f608b     10318  tests/mcp_server_test.py
+9efa386279415ab97be49bcff96debf2f2785912a1a697223dd324a8b12e9b88     12681  tests/mcp_server_test.py
 522eb065c8922ca216568af0c7df63e3ac094a09b3b7eb53cecb5feafb0131a0     14522  tests/mock_platform_test.py
 1397223ded34a723c2b0623292fe4dde5bc9afcaa9503395295ba25bb8b52e86     22396  tests/mock_receiver_test.py
 079b66a222e7b1092a64ba303238491747b854dedd4a4cfa871a1c30084851c0      9676  tests/mock_setup_test.py
@@ -163,6 +163,8 @@ a0167c39d392f699589e135ae1f26267cd42110e814a788acf379742ae1a527a     11979  test
 461bcc61c52c2acee5e902c028e6c3d7f4ec6a4f535c24fc60772fb1b212fb5b     15729  tests/v156_regression_test.py
 d644dc9466a9da6ea054d0f954837a480c97cb286ade66731739ca0506fc5386     13398  tests/v157_regression_test.py
 96bd10898d160e1cd58843722886f17acb8ad96a7ab70be26803ce67640cbd15     12307  tests/v159_regression_test.py
-20e13bae587a1d2630198b921b13e0e90a826fed57269262c93b85982e01042b     21702  mcp/inspiration_mcp.py
+838b80e07b50f01530db75b1cd45f8965b6220b36959f554cd70d80d1c39ea2f     11162  mcp/flywheel.py
+5200f450a60534e083713869af453458021a9967ac49e5bee9cc9a5f5b702eaa     25565  mcp/inspiration_mcp.py
 00fc1fa21eeb7dfba5c7a3f12d4b27e71877487e9680577ed570f6bb53fb4e27       343  mcp/mcp.example.json
 af798ffccff53c9cf9c998af6a39b99ae739910df021b6dd941332a05c4aea3b      5094  mcp/seed_demo.py
+98c61ca2e9e4deea026d3f4aec2848e81ac243fbfad762f8c56061e8d18e5548      6869  mcp/usage_log.py
