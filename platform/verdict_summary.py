@@ -46,13 +46,26 @@ def now_iso() -> str:
 def build(state_dir: Path, config: Path | None = None, today: date | None = None) -> dict:
     """调用本地周报逻辑，但只保留聚合字段；绝不把评价原文带出本机。"""
     wr = _load("insp-review/scripts/weekly_review.py", "vs_weekly_review")
-    _, props = wr.review(Path(state_dir), today or date.today(), None, Path(config) if config else None)
+    day = today or date.today()
+    _, props = wr.review(Path(state_dir), day, None, Path(config) if config else None)
     prop = props.get("proposal")
     safe_prop = None
     if isinstance(prop, dict):
         safe_prop = {k: prop.get(k) for k in ("dimension", "key", "from", "to", "evidence",
                                               "params", "weights_version_before")}
         safe_prop["confirmed"] = False   # 摘要里的提议永远未确认，网页不能拿它去改权重
+    # ③ 真实结果校准：只带 type 维度的聚合数值与系统生成的提示；subfield 为自由文本，不进脱敏摘要。
+    cal_mod = _load("platform/calibration.py", "vs_calibration")
+    cal = cal_mod.build(Path(state_dir), Path(config) if config else None, day)
+    safe_cal_prop = None
+    if isinstance(cal.get("proposal"), dict):
+        safe_cal_prop = {k: cal["proposal"].get(k) for k in ("kind", "target", "dimension", "key",
+                                                             "direction", "hint", "evidence")}
+        safe_cal_prop["confirmed"] = False   # 网页不能确认校准提议，更不能触发应用
+    calibration = {"schema": cal.get("schema"), "n": cal.get("n"),
+                   "confirmed_rate": cal.get("confirmed_rate"), "adoption_rate": cal.get("adoption_rate"),
+                   "by_type": cal.get("by_type") or {}, "proposal": safe_cal_prop,
+                   "applied": cal.get("applied")}
     return {
         "schema": SCHEMA,
         "generated_at": now_iso(),
@@ -66,7 +79,8 @@ def build(state_dir: Path, config: Path | None = None, today: date | None = None
         "type_stats": props.get("type_stats") or {},
         "proposal": safe_prop,
         "outcome_summary": props.get("outcome_summary") or {},
-        "note": "脱敏聚合：不含评价原文、卡片标题、引文、记忆内容与本机路径",
+        "calibration": calibration,
+        "note": "脱敏聚合：不含评价原文、卡片标题、引文、记忆内容与本机路径；权重与校准提议都恒为未确认",
     }
 
 

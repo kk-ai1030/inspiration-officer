@@ -94,7 +94,7 @@ def main() -> int:
         tools = t["result"]["tools"]
         names = {x["name"] for x in tools}
         check("MCP-1 notification 不产生响应", t["id"] == 2, str(t)[:200])
-        check("MCP-1 17 个工具且 schema 合法", len(names) == 17 and
+        check("MCP-1 18 个工具且 schema 合法", len(names) == 18 and
               all(x["inputSchema"]["type"] == "object" and x["description"] for x in tools), str(sorted(names)))
         check("MCP-1 ping / 空资源与提示", c.rpc("ping", {}, 3)["result"] == {} and
               c.rpc("resources/list", {}, 4)["result"] == {"resources": []} and
@@ -145,6 +145,17 @@ def main() -> int:
         c.tool("insp_flywheel", {}, 31)
         after = {p.name: p.stat().st_mtime_ns for p in sd.rglob("*") if p.is_file()}
         check("MCP-6 完全只读", before == after)
+
+        print("== MCP-8 独立校准提议（③）")
+        before = {p.name: p.stat().st_mtime_ns for p in sd.rglob("*") if p.is_file()}
+        r, text = c.tool("insp_calibration", {}, 32)
+        cal = json.loads(text)["calibration"]
+        check("MCP-8 两套标签分开且样本不足不提议", r["isError"] is False and
+              cal["n"] == 1 and cal["confirmed_rate"] == 1.0 and cal["adoption_rate"] == 1.0
+              and cal["proposal"] is None, text[:200])
+        check("MCP-8 校准不进 p̂ / 权重 / 排序", "p_hat" in cal["isolation"]["not_in"]
+              and "weights" in cal["isolation"]["not_in"], text[:200])
+        check("MCP-8 完全只读", before == {p.name: p.stat().st_mtime_ns for p in sd.rglob("*") if p.is_file()})
 
         print("== MCP-3 错误与隐私")
         r, text = c.tool("no_such_tool", {}, 23)

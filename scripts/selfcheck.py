@@ -280,6 +280,8 @@ SUITES = [
     ("MCP stdio 服务器", ["tests/mcp_server_test.py"], "MCP OK"),
     ("MCP 使用画像自测", ["mcp/usage_log.py", "--self-test"], "SELF-TEST OK: usage_log"),
     ("飞轮观测台自测", ["mcp/flywheel.py", "--self-test"], "SELF-TEST OK: flywheel"),
+    ("校准提议自测", ["platform/calibration.py", "--self-test"], "SELF-TEST OK: calibration"),
+    ("真实结果校准 ③", ["tests/calibration_test.py"], "CALIBRATION OK"),
 ]
 
 

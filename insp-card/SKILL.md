@@ -79,6 +79,20 @@ triage.json.shortlisted（只能使用这里的候选）
 7. **复活候选**（`revival: true`）必须在 why_me 里写明“复活放行：你之前否决过这个方向”。
 8. 卡片 `status` 一律为 `proposed`，`verdict` 一律为 `null`。
 
+## 结果校准提示（③ · 只当提示词证据）
+
+本机把「采纳后结果回填」聚合成**独立的校准提议**；用户在本机 `--confirm` 之后，生效的提示会随脱敏摘要 `verdict_summary.json` 的 `calibration.applied` 一起进沙箱。它可能出现在：
+
+- `/workspace/inspiration_state/verdict_summary.json`（收货员同步回沙箱的状态）；
+- `/workspace/_refs/verdict_summary.json`（评价页按钮触发运行时随附件挂载）。
+
+找到摘要且 `calibration.applied` 非空时：
+
+1. 读 `dimension` / `key` / `direction` / `hint`，把 `hint` 当作**写卡时的软性提示**：`strengthen_evidence` → 该类型卡片的 `expected_observable` / `falsifier` 写得更可量化、`minimal_check` 写清两天内能做完的步骤；`broaden_coverage` → 这类候选不必额外收紧。
+2. 三字段、逐字引用、rubric 打分、分类配额**照旧**，不因校准提示抬高或降低任何门槛。
+3. **不得**据此改 `rubric.md`、权重、配额或排序；不得把结论成立率写成采纳率；不得把校准样本数当论文证据写进卡片或 `numbers_provenance`。校准提示是研究流程提示，不是文献证据。
+4. 摘要里没有 `calibration.applied` 时不猜、不编、不索要原始 `outcomes.jsonl`。校准提议默认 `confirmed=false`，网页和你都不能代用户确认。
+
 ## 命令纪律（v1.4.4，全文模式必守，摘要模式同样适用）
 
 平台的命令执行器会把长命令、用 `&&` 串起来的命令切碎（真机：`rel_2512\n.15790.md`），grep 其实跑成功了也会被判失败；**连续 5 次工具失败，平台会强制停机，cards.json 和结果块就都交不出来了**。所以：

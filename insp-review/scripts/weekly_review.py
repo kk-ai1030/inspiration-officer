@@ -114,9 +114,11 @@ def review(state_dir: Path, today: date, memory: list[dict] | None, config: Path
     min_delta, floor = float(learn["min_delta"]), float(learn["floor"])
     dims = learn["dimensions"]
     card_sub = {}
+    card_type = {}
     for cf in (state_dir / "cards").glob("*/cards.json"):
         for c in json.loads(cf.read_text(encoding="utf-8")).get("cards", []):
             card_sub[c["id"]] = c.get("subfield")
+            card_type[c["id"]] = c.get("type")
     stacks: dict[str, list] = {}
     for v in verdicts:  # one vote per card: its latest explicit verdict (e.g. ask_detail then adopt -> adopt)
         if v.get("action") == "retract":  # card-UI undo pops the latest explicit verdict
@@ -236,12 +238,55 @@ def review(state_dir: Path, today: date, memory: list[dict] | None, config: Path
     L += ["", "实测摘录（最多 3 条，来自你自己填写的结论）：", ""]
     excerpts = [o for o in outcome_latest.values() if o.get("conclusion")][:3]
     L += [f"- `{o['card_id']}`：{str(o['conclusion'])[:80]}" for o in excerpts] or ["- 暂无。"]
+    # ③ 真实结果校准观测（自包含）：不 import platform/calibration.py，平台只挂载实际加载的技能。
+    # 采纳率来自 verdicts.jsonl，结论成立率来自 outcomes.jsonl；两套标签分开统计，绝不混进第 1–3 节的 p̂ / Δw。
+    cal: dict[str, dict] = defaultdict(lambda: {"n": 0, "confirmed": 0, "evaluated": 0, "adopted": 0})
+    for cid, v in latest.items():
+        t = str(v.get("type") or card_type.get(cid) or "")
+        if not t:
+            continue
+        cal[t]["evaluated"] += 1
+        if v["action"] in POSITIVE:
+            cal[t]["adopted"] += 1
+    for cid, o in outcome_latest.items():
+        if o.get("outcome") not in ("confirmed", "refuted"):
+            continue
+        t = str((latest.get(cid) or {}).get("type") or card_type.get(cid) or "")
+        if not t:
+            continue
+        cal[t]["n"] += 1
+        if o["outcome"] == "confirmed":
+            cal[t]["confirmed"] += 1
+    calibration_observation = {}
+    for t, g in sorted(cal.items()):
+        cr = round(g["confirmed"] / g["n"], 3) if g["n"] else None
+        ar = round(g["adopted"] / g["evaluated"], 3) if g["evaluated"] else None
+        calibration_observation[t] = {
+            "n": g["n"], "confirmed": g["confirmed"], "refuted": g["n"] - g["confirmed"],
+            "confirmed_rate": cr, "evaluated": g["evaluated"], "adopted": g["adopted"],
+            "adoption_rate": ar, "gap": round(ar - cr, 3) if ar is not None and cr is not None else None}
+    L += ["", "## 10. 真实结果校准（③ · 只观测，不调权重）", "",
+          "> 采纳率来自 `verdicts.jsonl`，结论成立率来自 `outcomes.jsonl`，是两套标签；"
+          "本节数字不进第 1–3 节的 p̂ / Δw，也不改排序。", ""]
+    if calibration_observation:
+        L += ["| 类型 | 有效结果 n | 成立 | 不成立 | 结论成立率 | 采纳率（对照） | 差距 |",
+              "|---|---|---|---|---|---|---|"]
+        for t, g in calibration_observation.items():
+            cr = "—" if g["confirmed_rate"] is None else f"{g['confirmed_rate']:.0%}"
+            ar = "—" if g["adoption_rate"] is None else f"{g['adoption_rate']:.0%}"
+            gap = "—" if g["gap"] is None else f"{g['gap']:+.3f}"
+            L.append(f"| {t} | {g['n']} | {g['confirmed']} | {g['refuted']} | {cr} | {ar} | {gap} |")
+    else:
+        L.append("- 还没有做完的回填，暂无可校准的维度。")
+    L += ["", "- 独立校准提议在本机生成：`python platform/calibration.py --state-dir <状态目录> --write`。",
+          "- 提议 `confirmed` 恒为 false；只有 `--apply ... --confirm` 才生成写卡提示，不改 `weights.json`。"]
     proposals = {"week": tag, "review_id": review_id, "generated_for": today.isoformat(), "proposal": proposal,
                  "type_stats": stats, "feature_stats": feature_stats, "adopted_week_ids": sorted(adopted_week),
                  "memory_audit_ids": [m.get("id") for m in mem_audit], "outcome_summary": outcome_summary,
-                 # B4: 供 verdict_summary.py 生成脱敏摘要（只取数值，不取 adopted_week_ids / memory_audit_ids）
+                 # B4 / ③：供 verdict_summary.py 生成脱敏摘要（只取数值，不取 adopted_week_ids / memory_audit_ids）
                  "adoption": adoption, "repeat_rate": repeat, "implicit_week": len(implicit),
-                 "weights_version": int(weights.get("version", 0))}
+                 "weights_version": int(weights.get("version", 0)),
+                 "calibration_observation": calibration_observation}
     return "\n".join(L) + "\n", proposals
 
 
@@ -289,6 +334,21 @@ def render_from_summary(s: dict) -> str:
                  f"没做 {by.get('abandoned', 0)} · 待定 {by.get('unknown', 0)}；结论成立率 {oc.get('confirmed_rate')}。")
     else:
         L.append("- 还没有采纳后结果回填。")
+    cal = s.get("calibration") or {}
+    if cal.get("n"):
+        L.append(f"- 真实结果校准：{cal['n']} 条有效结果，结论成立率 {cal.get('confirmed_rate')}；"
+                 f"采纳率 {cal.get('adoption_rate')}（对照列，两套标签不混算、不调权重）。")
+    else:
+        L.append("- 真实结果校准：还没有做完的回填，暂无可校准样本。")
+    cp = cal.get("proposal") or {}
+    if cp:
+        L.append(f"- 本机校准提议：`{cp.get('key')}` / {cp.get('direction')}（仅写卡提示，"
+                 f"confirmed={cp.get('confirmed')}，网页不会应用）。")
+    ca = cal.get("applied")
+    if ca:
+        L.append(f"- 已确认生效的写卡提示：`{ca.get('key')}` / {ca.get('direction')}（本机 --confirm 后才生成）。")
+    else:
+        L.append("- 目前没有已确认生效的校准提示。")
     L += ["", "## 5. 边界", "",
           "- 没有摘要时应直接说明「周报需要在本地运行」，不得手算、不得编造数字。",
           "- 记忆审计、权重应用、记忆删除都不在网页里做。"]

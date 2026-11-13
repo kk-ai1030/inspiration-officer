@@ -26,7 +26,7 @@ from pathlib import Path
 
 USAGE_FILE = "mcp_usage.jsonl"
 # 观测类工具不埋点：否则「上次调用」永远会是 insp_status 自己
-SKIP_TOOLS = {"insp_status", "insp_help", "insp_usage", "insp_forget", "insp_flywheel"}
+SKIP_TOOLS = {"insp_status", "insp_help", "insp_usage", "insp_forget", "insp_flywheel", "insp_calibration"}
 # 只允许这些类别值进入日志；card_id 单独放行（标识符，不是原文）
 SAFE_KEYS = ("scope", "action", "outcome", "write")
 FLOW = ("insp_list_cards", "insp_get_card", "insp_record_verdict", "insp_record_outcome",

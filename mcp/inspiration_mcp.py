@@ -61,6 +61,7 @@ WR = _load("insp-review/scripts/weekly_review.py", "mcp_weekly")
 XS = _load("insp-nightly/scripts/extra_sources.py", "mcp_extra")
 UL = _load("mcp/usage_log.py", "mcp_usage_log")
 FW = _load("mcp/flywheel.py", "mcp_flywheel")
+CAL = _load("platform/calibration.py", "mcp_calibration")
 
 WRITE_TOOLS = {"insp_record_verdict", "insp_record_outcome", "insp_forget"}
 
@@ -221,7 +222,8 @@ def t_sources_plan(args: dict, ctx: Ctx):
 
 def t_help(args: dict, ctx: Ctx):
     d = {"typical_flow": ["insp_status", "insp_list_cards", "insp_get_card", "insp_record_verdict",
-                          "insp_record_outcome", "insp_weekly_report", "insp_dryrun_script"],
+                          "insp_record_outcome", "insp_weekly_report", "insp_dryrun_script",
+                          "insp_calibration", "insp_flywheel"],
          "writes": sorted(WRITE_TOOLS), "read_only": ctx.read_only, "usage_enabled": ctx.usage_enabled,
          "note": "所有工具都只访问 --state-dir；卡片生成仍由 SciencePal 云端智能体负责，MCP 不联网。"}
     if ctx.usage_enabled:
@@ -234,6 +236,13 @@ def t_help(args: dict, ctx: Ctx):
 
 def t_flywheel(args: dict, ctx: Ctx):
     return FW.build(ctx.state_dir, ctx.config)
+
+
+def t_calibration(args: dict, ctx: Ctx):
+    d = CAL.build(ctx.state_dir, ctx.config)
+    return {"calibration": d,
+            "note": "只读：采纳率与结论成立率是两套标签；提议恒为未确认，不改权重 / 画像 / 排序。"
+                    "要生效请在本机运行 platform/calibration.py --apply ... --confirm。"}
 
 
 def t_usage(args: dict, ctx: Ctx):
@@ -254,6 +263,7 @@ HANDLERS = {
     "insp_dryrun_script": t_dryrun_script, "insp_dryrun_receipt": t_dryrun_receipt,
     "insp_list_jobs": t_list_jobs, "insp_sources_plan": t_sources_plan, "insp_help": t_help,
     "insp_flywheel": t_flywheel, "insp_usage": t_usage, "insp_forget": t_forget,
+    "insp_calibration": t_calibration,
 }
 
 
@@ -292,6 +302,8 @@ def tool_defs(ctx: Ctx) -> list[dict]:
         ("insp_help", "只读。返回推荐调用顺序、读写工具清单，以及开启使用画像后的个性化引导。", _schema({})),
         ("insp_flywheel", "只读。飞轮观测台：采纳率趋势、p̂、权重版本与提议、结果成立率、隐式信号，"
                           "并诚实列出目前还没回流的信号。不改权重、不写文件。", _schema({})),
+        ("insp_calibration", "只读。③ 真实结果校准：按类型分开列采纳率与结论成立率，给出独立的写卡提示提议"
+                             "（恒为未确认）；不改 p̂ / 权重 / 排序，MCP 不能代你确认。", _schema({})),
         ("insp_usage", "只读。查看 MCP 使用画像统计（默认关闭时不产生任何日志）。", _schema({})),
         ("insp_forget", "**写本地文件**。一键清除 MCP 使用画像；不影响评价 / 卡片 / 权重 / 结果回填。", _schema({})),
     ]

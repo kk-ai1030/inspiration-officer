@@ -79,6 +79,7 @@ def build(state_dir: Path, config: Path | None = None, today: date | None = None
     VERDICT = _load("insp-feedback/scripts/record_verdict.py", "flywheel_verdict")
     OUTCOME = _load("insp-feedback/scripts/record_outcome.py", "flywheel_outcome")
     WR = _load("insp-review/scripts/weekly_review.py", "flywheel_weekly")
+    CAL = _load("platform/calibration.py", "flywheel_calibration")
 
     verdicts = VERDICT.read_verdicts(sd)
     explicit = [v for v in verdicts if v.get("explicit") and v.get("action") != "retract"]
@@ -105,6 +106,7 @@ def build(state_dir: Path, config: Path | None = None, today: date | None = None
         if (sd / "taste/weights.json").is_file() else {}
     history = weights.get("history") or []
     _, props = WR.review(sd, today, None, Path(config) if config else None)
+    cal = CAL.build(sd, Path(config) if config else None, today)
 
     feature_stats = props.get("feature_stats") or {}
     proposal = props.get("proposal")
@@ -119,11 +121,18 @@ def build(state_dir: Path, config: Path | None = None, today: date | None = None
         learned.append(f"采纳后结果回填 {outcomes['total']} 张，结论成立率 {rate}。")
     if history:
         learned.append(f"权重已确认调整 {len(history)} 次，当前版本 {weights.get('version')}。")
+    if cal["n"]:
+        learned.append(f"真实结果校准样本 {cal['n']} 条，结论成立率 {cal['confirmed_rate']:.0%}"
+                       "（与采纳率分开统计，不混进 p̂）。")
+    if cal.get("applied"):
+        learned.append(f"已有经 --confirm 生效的写卡校准提示（{cal['applied'].get('key')}），仍不改权重与排序。")
     if not learned:
         learned.append("还没有任何反馈信号，飞轮尚未开始转动。")
 
     gaps = [
-        "采纳后结果回填（outcomes.jsonl）目前只进周报第 9 节展示，不参与 p̂ / 权重 / 去重 / 排序（B1 的隔离约定）。",
+        "采纳后结果回填（outcomes.jsonl）已能生成独立校准提议（③），但仍不参与 p̂ / 权重 / 去重 / 排序；"
+        "提议只是写卡提示，需本机 --confirm 才生效（B1 的隔离约定）。",
+        "校准提议默认 confirmed=false，网页与 MCP 都不能代你确认；确认后只写 taste/calibration.json，不写 weights.json。",
         "隐式信号（implicit.jsonl 的停留 / 翻面）只被记录，不参与权重（项目约定「只问不改」）。",
         "profile/interests.md 建立画像后不会自动更新，画像只用于出卡提示词。",
     ]
@@ -142,6 +151,9 @@ def build(state_dir: Path, config: Path | None = None, today: date | None = None
                          "adoption_rate": round(adopted / len(explicit), 3) if explicit else None,
                          "by_action": dict(by_action), "last_14d": len(recent)},
             "outcomes": outcomes,
+            "calibration": {"n": cal["n"], "confirmed_rate": cal["confirmed_rate"],
+                            "adoption_rate": cal["adoption_rate"], "by_type": cal["by_type"],
+                            "proposal": cal["proposal"], "applied": cal["applied"]},
             "implicit": {"total": len(implicit), "flipped": sum(1 for r in implicit if r.get("flipped")),
                          "avg_dwell_ms": round(sum(int(r.get("dwell_ms") or 0) for r in implicit) / len(implicit))
                          if implicit else None},
@@ -154,6 +166,8 @@ def build(state_dir: Path, config: Path | None = None, today: date | None = None
         "flywheel": {
             "p_hat_by_feature": feature_stats,
             "next_weight_proposal": proposal,
+            "calibration_proposal": cal["proposal"],
+            "calibration_applied": cal["applied"],
             "samples_to_next_proposal": nearest,
             "learned": learned,
             "not_consumed": gaps,
