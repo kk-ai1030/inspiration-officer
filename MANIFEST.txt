@@ -1,4 +1,4 @@
-# inspiration-skills 1.5.9-test · 170 个文件 · 格式：sha256  大小  路径
+# inspiration-skills 1.5.9-test · 171 个文件 · 格式：sha256  大小  路径
 
 cc82cde5b1ee7c07187eba627e5de09f6ea43e7357327b10fb1b39f8950b2d48        11  VERSION
 2a2d1c0c6e14bd64b4b4b70ff1d3edc886a81135543c7d7d2d3034f51ab91437       595  demo_reset.bat
@@ -15,6 +15,7 @@ e88730dc303212d319746ebd3a35c729cd5fa11ccd0ab79ca2de197738262e16    339532  docs
 d1268c76d2829096d0f17f6fcb354a1c3293391c4ffa23033bd60b0b19f34387    226661  docs/images/verdict.png
 cf6ea480f5500d382cefe738ee48ce89d46d703b9cd9b2d2bebcad413de5e185      7270  docs/v1.5_测试验收节点.md
 ee8b51ae403013bbb04e97acfbfb64e77ac6367a520198ea8d21d3084785d036      8715  docs/weak-beta发布门槛与证据.md
+40ee3375c0dc79549d6f3337cbeaf53824c4523b8f6d77e82767bacddd72f2e0     11120  docs/优化总结与已知问题.md
 1da5e439c2c0ea058db56a5a036daf7c66d64359db379a6673f701b4952edfa0     39529  docs/开发文档.md
 881c3e52f23c56216512bcb06e07573a7309eb334d916362199a4086c95cffef       302  insp-card/agents/openai.yaml
 5d33eae8469f810d948d4a9143fac3ae33932f28bf8ef5e87e45eb518b8346af      2366  insp-card/assets/卡片模板/cards.json
