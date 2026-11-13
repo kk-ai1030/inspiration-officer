@@ -1,4 +1,4 @@
-# inspiration-skills 1.5.9-test · 162 个文件 · 格式：sha256  大小  路径
+# inspiration-skills 1.5.9-test · 166 个文件 · 格式：sha256  大小  路径
 
 cc82cde5b1ee7c07187eba627e5de09f6ea43e7357327b10fb1b39f8950b2d48        11  VERSION
 2a2d1c0c6e14bd64b4b4b70ff1d3edc886a81135543c7d7d2d3034f51ab91437       595  demo_reset.bat
@@ -8,7 +8,7 @@ f93b133d0de31a233235d09b34d43768af499fa99d7b6cd12d6b5a753fe738f8      7012  READ
 95395c4498f9145ac044deaf0bfd94552da20e19bec2004d8841c25112c8dfeb     12881  CONTRIBUTING.md
 e95f54d8b8c315f38b26fbb11b344005227c19e2d00bd69d92d563928e6b4ad4     32090  useguide.md
 1406f64f0ac1e5cbc33a0ea3a998201c383997d113fb6edb9573e70fe2b0200a      6702  评价读写约定.md
-6e86134266a662a8bb135871c6508bded606f9cd480935524921737c340299a9       477  .gitignore
+cc7bfdc1a25b94fb00d4142821cb0d6796e32490f9a8f20b85ee4481dca43076       568  .gitignore
 e88730dc303212d319746ebd3a35c729cd5fa11ccd0ab79ca2de197738262e16    339532  docs/images/arch.png
 43db5c59c90b06ef62d9adad4c92a58637871cecdcb6f3b8c6780e8f47480530    336315  docs/images/run.png
 4262e1f96f15db91b81f2815f75fef2ff8ba52b78e1e8ca07f1f079994aeea65    116274  docs/images/state.png
@@ -125,8 +125,8 @@ d585f8bfa20f01340db9efc3c29458e2c7f93d4da9ca045d137cff7b8b062343      2285  plat
 36e6cf2a08f710f5590c84249b27e34d6b01872c1bb0a78e3d42426e7d548a39      2206  platform/windows/remove_legacy_tasks.ps1
 e11f6d766ff3da0476a9578a01060c34824b700a219e546c9c1dc5d9c3dc2e7c      2154  platform/windows/start_review_server.ps1
 92154be238371b11623d8f386ded87c5ba4d920cc58706a5c567876c982726c0      2671  platform/windows/toast.ps1
-cb3c198a0598bd5995d172c8b5c42769b5495d93c0fdbb22c25cb5508ec93a80      5026  scripts/build_release.py
-6a1ecd8c792ac14dc86fad343ac472da8edf8ba1a4d9cce75484c04fa1acf5b6     53969  scripts/selfcheck.py
+60517e8318acbba7e7ea48e6bdf40acc37aff3c55b2a0e1c79750ce1395b551b      5033  scripts/build_release.py
+9964bd98f84abbfdbe2765a1cc8dfa45423e47a2a87bf634f24bb1901fa39915     54045  scripts/selfcheck.py
 bcaff4aa9b47670700ea9dcb7797ea4b44bf23e2df483f1a1074d5b791b0da23      2363  scripts/sync_vendor.py
 a6b3a7fea2182c21af34ec8c9239866c3e0a04b411baf06b14bd8fb69b73774a      5402  tests/arxiv_check_test.py
 7c3d58425b19d36dfa4d15d4b26a8d75d88dc8f0ebb2700ae2219186b07b409c      7217  tests/b1_outcome_test.py
@@ -149,6 +149,7 @@ c88a8f7421a374af85abb7b26396c34b5f4bf1699f44d256043a1087cdb18d13      4468  test
 078e2c12caca128450169b3853b15ea43dd304faf6d4d33ed885333ef6828bae       462  tests/fixtures/seen_ids.json
 7781312a10abad6b31fa979aeffa0a54a70d2cd7afc2f00ee45ac1eb86d6e40f       174  tests/fixtures/verdict_block.txt
 4ceda5129114246a7b1c4eac34e92f069c0b674fdcb9399fa5291a3d3c3ce20e     13287  tests/learning_loop_sim.py
+23caa706f3a8d13c3cc26446fe0ec38a37c3a2d0a8e71a82017b8f0aa53f608b     10318  tests/mcp_server_test.py
 522eb065c8922ca216568af0c7df63e3ac094a09b3b7eb53cecb5feafb0131a0     14522  tests/mock_platform_test.py
 1397223ded34a723c2b0623292fe4dde5bc9afcaa9503395295ba25bb8b52e86     22396  tests/mock_receiver_test.py
 079b66a222e7b1092a64ba303238491747b854dedd4a4cfa871a1c30084851c0      9676  tests/mock_setup_test.py
@@ -162,3 +163,6 @@ a0167c39d392f699589e135ae1f26267cd42110e814a788acf379742ae1a527a     11979  test
 461bcc61c52c2acee5e902c028e6c3d7f4ec6a4f535c24fc60772fb1b212fb5b     15729  tests/v156_regression_test.py
 d644dc9466a9da6ea054d0f954837a480c97cb286ade66731739ca0506fc5386     13398  tests/v157_regression_test.py
 96bd10898d160e1cd58843722886f17acb8ad96a7ab70be26803ce67640cbd15     12307  tests/v159_regression_test.py
+20e13bae587a1d2630198b921b13e0e90a826fed57269262c93b85982e01042b     21702  mcp/inspiration_mcp.py
+00fc1fa21eeb7dfba5c7a3f12d4b27e71877487e9680577ed570f6bb53fb4e27       343  mcp/mcp.example.json
+af798ffccff53c9cf9c998af6a39b99ae739910df021b6dd941332a05c4aea3b      5094  mcp/seed_demo.py

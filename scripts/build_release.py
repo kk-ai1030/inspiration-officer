@@ -30,7 +30,7 @@ PY = sys.executable
 # 白名单：只有这些会进包（目录递归）
 INCLUDE = ["VERSION", "demo_reset.bat", "demo_restore.bat", "README.md", "CHANGELOG.md", "CONTRIBUTING.md", "useguide.md", "评价读写约定.md", ".gitignore",
            "docs", "insp-card", "insp-feedback", "insp-init", "insp-nightly", "insp-profile", "insp-review", "insp-triage",
-           "platform", "scripts", "tests"]
+           "platform", "scripts", "tests", "mcp"]
 # 白名单目录里也不许出现的东西
 EXCLUDE = [r"(^|/)__pycache__(/|$)", r"\.pyc$", r"(^|/)\.DS_Store$", r"(^|/)Thumbs\.db$", r"\.bak-\d",
            r"(^|/)config(_exp)?\.json$", r"(^|/)platform_ids\.json$", r"(^|/)(session_token|run_token|review_token)$",

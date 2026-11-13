@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "inspiration-officer": {
+      "command": "python",
+      "args": [
+        "d:/inspiration-officer/mcp/inspiration_mcp.py",
+        "--state-dir",
+        "d:/inspiration-officer/mcp_demo_state"
+      ],
+      "env": {
+        "PYTHONUTF8": "1",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}

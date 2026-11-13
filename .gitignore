@@ -24,6 +24,9 @@ library/
 # 演示重置的备份
 demo_backups/
 
+# MCP 演示状态（seed_demo.py 生成，含示例评价，别提交）
+mcp_demo_state/
+
 # 令牌与凭据（任何位置）
 *.token
 *.secret
